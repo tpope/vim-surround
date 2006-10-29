@@ -126,6 +126,9 @@ endfunction
 
 function! s:inputtarget()
     let c = s:getchar()
+    if c == " "
+        let c = c . s:getchar()
+    endif
     if c =~ "\<Esc>\|\<C-C>\|\0"
         return ""
     else
@@ -164,7 +167,7 @@ function! s:wrap(string,char,...) " {{{1
     let linemode = a:0 ? a:1 : 0
     let before = ""
     let after  = ""
-    " Duplicate b's are just placeholders
+    " Duplicate b's are just placeholders (removed)
     let pairs = "b()B{}r[]a<>"
     let extraspace = ""
     if newchar =~ '^ '
@@ -178,10 +181,10 @@ function! s:wrap(string,char,...) " {{{1
     elseif exists("g:surround_".char2nr(newchar))
         let before = matchstr(g:surround_{char2nr(newchar)},'.*\ze\n')
         let after  = matchstr(g:surround_{char2nr(newchar)},'\n\zs.*')
-    elseif newchar == "p"
+    elseif newchar ==# "p"
         let before = "\n"
         let after  = "\n\n"
-    elseif newchar == "t" || newchar == "T" || newchar == "<"
+    elseif newchar ==# "t" || newchar ==# "T" || newchar == "<"
         let dounmapr = 0
         let dounmapb = 0
         if !mapcheck("<CR>","c")
@@ -193,7 +196,7 @@ function! s:wrap(string,char,...) " {{{1
             cnoremap > ><CR>
         endif
         let default = ""
-        if newchar == "T"
+        if newchar ==# "T"
             let default = matchstr(@@,'<\zs.\{-\}\ze>')
         endif
         let tag = input("<",default)
@@ -209,26 +212,23 @@ function! s:wrap(string,char,...) " {{{1
             let before = "<".tag.">"
             let after  = "</".substitute(tag," .*",'','').">"
         endif
-    elseif newchar == 'l' || newchar == '\'
-        let dounmapr = 0
-        if !mapcheck("<CR>","c")
-            let dounmapr = 1
-            cnoremap <silent> <CR> <C-R>=<SID>closematch()<CR><CR>
-        endif
+    elseif newchar ==# 'l' || newchar == '\'
         let env = input('\begin','{')
+        let env = env . s:closematch(env)
         echo '\begin'.env
-        if dounmapr
-            silent! cunmap <CR>
-        endif
         if env != ""
             let before = '\begin'.env
             let after  = '\end'.matchstr(env,'[^}]*').'}'
         endif
-    elseif newchar == 'f'
+    elseif newchar ==# 'f' || newchar ==# 'F'
         let func = input('function: ')
         if func != ""
             let before = substitute(func,'($','','').'('
             let after  = ')'
+            if newchar ==# 'F'
+                let before = before . ' '
+                let after  = ' ' . after
+            endif
         endif
     elseif idx >= 0
         let spc = (idx % 3) == 1 ? " " : ""
@@ -288,7 +288,7 @@ function! s:reindent() " {{{1
 endfunction " }}}1
 
 function! s:dosurround(...) " {{{1
-    let g:scount = v:count1
+    let scount = v:count1
     let char = (a:0 ? a:1 : s:inputtarget())
     let spc = ""
     if char =~ '^ '
@@ -305,7 +305,7 @@ function! s:dosurround(...) " {{{1
     let append = ""
     let original = @@
     let @@ = ""
-    exe "norm di".char
+    exe "norm d".(scount==1 ? "": scount)."i".char
     "exe "norm vi".char."d"
     let keeper = @@
     let okeeper = keeper " for reindent below
@@ -315,11 +315,11 @@ function! s:dosurround(...) " {{{1
     endif
     let oldline = getline('.')
     let oldlnum = line('.')
-    if char == "p"
+    if char ==# "p"
         let append = matchstr(keeper,'\n*\%$')
         let keeper = substitute(keeper,'\n*\%$','','')
         let @@ = ""
-    elseif char == "s" || char == "w" || char == "W"
+    elseif char ==# "s" || char ==# "w" || char ==# "W"
         " Do nothing
         let @@ = ""
     elseif char =~ "[\"'`]"
@@ -337,11 +337,11 @@ function! s:dosurround(...) " {{{1
     "let g:rem2 = rem2
     "let g:keeper = keeper
     let regtype = getregtype('"')
-    if char =~ '[\[({<]' || spc
+    if char =~# '[\[({<T]' || spc
         let keeper = substitute(keeper,'^\s\+','','')
         let keeper = substitute(keeper,'\s\+$','','')
     endif
-    if oldtail == rem2 && col('.') + 1 == col('$')
+    if oldtail ==# rem2 && col('.') + 1 == col('$')
         if oldhead =~# '^\s*$' && a:0 < 2
             "let keeper = substitute(keeper,'\n\s*','\n','')
             let keeper = substitute(keeper,oldhead.'\%$','','')
@@ -354,7 +354,7 @@ function! s:dosurround(...) " {{{1
         endif
         let pcmd = "P"
     endif
-    if line('.') < oldlnum && regtype == "V"
+    if line('.') < oldlnum && regtype ==# "V"
         let pcmd = "p"
     endif
     if removed =~ '\n$'
@@ -368,7 +368,7 @@ function! s:dosurround(...) " {{{1
     "endif
     "let g:removed = removed
     if newchar != ""
-        let keeper = s:wrap(keeper,newchar,char == "p") . append
+        let keeper = s:wrap(keeper,newchar,char ==# "p") . append
     endif
     let @@ = substitute(keeper,'\n\s+\n','\n\n','g')
     call setreg('"','','a'.regtype)
@@ -402,12 +402,12 @@ function! s:opfunc(type) " {{{1
     let sel_save = &selection
     let &selection = "inclusive"
     let reg_save = @@
-    let linemode = (a:type == "line" || a:type == "V")
+    let linemode = (a:type == "line" || a:type ==# "V")
     if a:type == "char"
         silent norm! `[v`]y
     elseif a:type == "line"
         silent norm! '[V']y
-    elseif a:type == "v" || a:type == "V"
+    elseif a:type ==# "v" || a:type ==# "V"
         silent norm! gvy
     elseif a:type =~ '^\d\+$'
         silent exe 'norm! ^v'.a:type.'$hy'
@@ -424,6 +424,7 @@ function! s:opfunc(type) " {{{1
         let append = matchstr(keeper,'\s*$')
         let keeper = substitute(keeper,'\s*$','','')
     endif
+    let @@ = reg_save " s:wrap() may peek at this
     let keeper = s:wrap(keeper,char,linemode) . append
     let @@ = keeper
     silent norm! gvp`[
@@ -434,9 +435,9 @@ function! s:opfunc(type) " {{{1
     let &selection = sel_save
 endfunction " }}}1
 
-function! s:closematch()
+function! s:closematch(str)
     " Close an open (, {, [, or < on the command line.
-    let tail = matchstr(getcmdline(),'.[^\[\](){}<>]*$')
+    let tail = matchstr(a:str,'.[^\[\](){}<>]*$')
     if tail =~ '^\[.\+'
         return "]"
     elseif tail =~ '^(.\+'
@@ -455,8 +456,8 @@ function! s:closedcmd()
     return getcmdline() . cm
 endfunction
 
-nnoremap <silent> <Plug>DSurround  :call <SID>dosurround(<SID>inputtarget())<CR>
-nnoremap <silent> <Plug>CSurround  :call <SID>changesurround()<CR>
+nnoremap <silent> <Plug>DSurround  :<C-U>call <SID>dosurround(<SID>inputtarget())<CR>
+nnoremap <silent> <Plug>CSurround  :<C-U>call <SID>changesurround()<CR>
 nnoremap <silent> <Plug>YSurround  :set opfunc=<SID>opfunc<CR>g@
 nnoremap <silent> <Plug>YSSurround :<C-U>call <SID>opfunc(v:count1)<CR>
 vnoremap <silent> <Plug>VSurround  :<C-U>call <SID>opfunc(visualmode())<CR>
