@@ -282,13 +282,19 @@ function! s:insert(...) " {{{1
 endfunction " }}}1
 
 function! s:reindent() " {{{1
-    if @@ =~ '\n' && (exists("b:surround_indent") || exists("g:surround_indent"))
+    if (exists("b:surround_indent") || exists("g:surround_indent"))
         silent norm! '[=']
     endif
 endfunction " }}}1
 
 function! s:dosurround(...) " {{{1
+    let g:scount = v:count1
     let char = (a:0 ? a:1 : s:inputtarget())
+    let spc = ""
+    if char =~ '^ '
+        let char = strpart(char,1)
+        let spc = 1
+    endif
     let newchar = ""
     if a:0 > 1
         let newchar = a:2
@@ -302,6 +308,7 @@ function! s:dosurround(...) " {{{1
     exe "norm di".char
     "exe "norm vi".char."d"
     let keeper = @@
+    let okeeper = keeper " for reindent below
     if @@ == ""
         let @@ = original
         return ""
@@ -330,6 +337,10 @@ function! s:dosurround(...) " {{{1
     "let g:rem2 = rem2
     "let g:keeper = keeper
     let regtype = getregtype('"')
+    if char =~ '[\[({<]' || spc
+        let keeper = substitute(keeper,'^\s\+','','')
+        let keeper = substitute(keeper,'\s\+$','','')
+    endif
     if oldtail == rem2 && col('.') + 1 == col('$')
         if oldhead =~# '^\s*$' && a:0 < 2
             "let keeper = substitute(keeper,'\n\s*','\n','')
@@ -362,7 +373,9 @@ function! s:dosurround(...) " {{{1
     let @@ = substitute(keeper,'\n\s+\n','\n\n','g')
     call setreg('"','','a'.regtype)
     silent exe "norm! ".(a:0 < 2 ? "" : "").pcmd.'`['
-    call s:reindent()
+    if removed =~ '\n' || okeeper =~ '\n'
+        call s:reindent()
+    endif
     if getline('.') =~ '^\s\+$' && keeper =~ '^\s*\n'
         silent norm! cc
     endif
