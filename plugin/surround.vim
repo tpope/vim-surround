@@ -38,12 +38,19 @@
 " Old                       Keystroke   New
 "     Hello w*orld!         yssB            {Hello world!}
 "
-" Finally, in visual mode, a simple "s" with an argument wraps the selection.
+" In visual mode, a simple "s" with an argument wraps the selection.
 " Note that "s" already has a valid meaning in visual mode, but it is
 " identical to "c".  If you have muscle memory for "s" and would like to use a
 " different key, add your own mapping and the existing one will be disabled.
 "
 " vmap S <Plug>VSurround
+"
+" Finally, there is an experimental insert mode mapping on <C-S>.  Beware that
+" this won't work on terminals with flow control (if you accidentally freeze
+" your terminal, use <C-Q> to unfreeze it).  This inserts the surrounding
+" characters and puts the cursor between them.  If, immediately after <C-S>
+" and before the replacement carriage return is pressed, the prefix, cursor,
+" and suffix will be placed on three separate lines.
 "
 " Replacements:
 "
@@ -80,7 +87,7 @@
 " Issues:
 "
 " Vim could potentially get confused when deleting/changing occurs at the very
-" end of the line.  Report any repeatable instances of this.
+" end of the line.  Pleae report any repeatable instances of this.
 "
 " Do we need to use inputsave() / inputrestore() with the tag replacement?
 "
@@ -88,7 +95,11 @@
 " similar to with tags.
 "
 " Reindenting is handled haphazardly.  Need to decide the most appropriate
-" behavior and implement it.
+" behavior and implement it.  Right now one can do :let b:surround_indent = 1
+" (or the global equivalent) to enable automatic reindenting by Vim; should
+" this be the default?
+"
+" It would be nice if . would work to repeat an operation.
 
 " ============================================================================
 
@@ -103,12 +114,63 @@ let g:loaded_surround = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
+" Input functions {{{1
+
+function! s:getchar()
+    let c = getchar()
+    if c =~ '^\d\+$'
+        let c = nr2char(c)
+    endif
+    return c
+endfunction
+
+function! s:inputtarget()
+    let c = s:getchar()
+    if c =~ "\<Esc>\|\<C-C>\|\0"
+        return ""
+    else
+        return c
+    endif
+endfunction
+
+function! s:inputreplacement()
+    "echo '-- SURROUND --'
+    let c = s:getchar()
+    if c == " "
+        let c = c . s:getchar()
+    endif
+    if c =~ "\<Esc>\|\<C-C>\|\0"
+        return ""
+    else
+        return c
+    endif
+endfunction
+
+function! s:beep()
+    exe "norm! \<Esc>"
+    return ""
+endfunction
+
+function! s:redraw()
+    redraw
+    return ""
+endfunction
+
+" }}}1
+
 function! s:wrap(string,char,...) " {{{1
     let keeper = a:string
     let newchar = a:char
     let linemode = a:0 ? a:1 : 0
+    let before = ""
+    let after  = ""
     " Duplicate b's are just placeholders
-    let pairs = "b()B{}b[]b<>"
+    let pairs = "b()B{}r[]a<>"
+    let extraspace = ""
+    if newchar =~ '^ '
+        let newchar = strpart(newchar,1)
+        let extraspace = ' '
+    endif
     let idx = stridx(pairs,newchar)
     if exists("b:surround_".char2nr(newchar))
         let before = matchstr(b:surround_{char2nr(newchar)},'.*\ze\n')
@@ -119,7 +181,7 @@ function! s:wrap(string,char,...) " {{{1
     elseif newchar == "p"
         let before = "\n"
         let after  = "\n\n"
-    elseif newchar == "t" || newchar == "<"
+    elseif newchar == "t" || newchar == "T" || newchar == "<"
         let dounmapr = 0
         let dounmapb = 0
         if !mapcheck("<CR>","c")
@@ -130,7 +192,12 @@ function! s:wrap(string,char,...) " {{{1
             let dounmapb= 1
             cnoremap > ><CR>
         endif
-        let tag = input("<")
+        let default = ""
+        if newchar == "T"
+            let default = matchstr(@@,'<\zs.\{-\}\ze>')
+        endif
+        let tag = input("<",default)
+        echo "<".substitute(tag,'>*$','>','')
         if dounmapr
             silent! cunmap <CR>
         endif
@@ -138,12 +205,30 @@ function! s:wrap(string,char,...) " {{{1
             silent! cunmap >
         endif
         if tag != ""
-            let tag = substitute(tag,'>$','','')
+            let tag = substitute(tag,'>*$','','')
             let before = "<".tag.">"
             let after  = "</".substitute(tag," .*",'','').">"
-        else
-            let before = ""
-            let after  = ""
+        endif
+    elseif newchar == 'l' || newchar == '\'
+        let dounmapr = 0
+        if !mapcheck("<CR>","c")
+            let dounmapr = 1
+            cnoremap <silent> <CR> <C-R>=<SID>closematch()<CR><CR>
+        endif
+        let env = input('\begin','{')
+        echo '\begin'.env
+        if dounmapr
+            silent! cunmap <CR>
+        endif
+        if env != ""
+            let before = '\begin'.env
+            let after  = '\end'.matchstr(env,'[^}]*').'}'
+        endif
+    elseif newchar == 'f'
+        let func = input('function: ')
+        if func != ""
+            let before = substitute(func,'($','','').'('
+            let after  = ')'
         endif
     elseif idx >= 0
         let spc = (idx % 3) == 1 ? " " : ""
@@ -164,16 +249,52 @@ function! s:wrap(string,char,...) " {{{1
         let initspaces = matchstr(keeper,'\%^\s*')
         let keeper = initspaces.before."\n".keeper."\n".initspaces.after
     else
-        let keeper = before.keeper.after
+        let keeper = before.extraspace.keeper.extraspace.after
     endif
     return keeper
 endfunction " }}}1
 
+function! s:insert(...) " {{{1
+    " Optional argument causes the result to appear on 3 lines, not 1
+    let linemode = a:0 ? a:1 : 0
+    let char = s:inputreplacement()
+    while char == "\<CR>"
+        " TODO: use total count for additional blank lines
+        let linemode = linemode + 1
+        let char = s:inputreplacement()
+    endwhile
+    if char == ""
+        return ""
+    endif
+    " We could just use null, but nooooo, that won't work
+    let text = s:wrap("\1",char,0)
+    if linemode
+        return substitute(text,'\s*\%x01\s*',"\<CR>",'')."\<C-O>O"
+    else
+        let len = strlen(substitute(substitute(text,'.*\%x01','',''),'.','.','g'))
+        let left = ""
+        while len > 0
+            let len = len - 1
+            let left = left . "\<Left>"
+        endwhile
+        return substitute(text,'\%x01','','') . left
+    endif
+endfunction " }}}1
+
+function! s:reindent() " {{{1
+    if @@ =~ '\n' && (exists("b:surround_indent") || exists("g:surround_indent"))
+        silent norm! '[=']
+    endif
+endfunction " }}}1
+
 function! s:dosurround(...) " {{{1
-    let char = nr2char(a:0 ? a:1 : getchar())
-    let newchar = a:0 > 1 ? nr2char(a:2) : ""
-    if newchar == "\<Esc>" || newchar == "\<C-C>"
-        return s:beep()
+    let char = (a:0 ? a:1 : s:inputtarget())
+    let newchar = ""
+    if a:0 > 1
+        let newchar = a:2
+        if newchar == "\<Esc>" || newchar == "\<C-C>" || newchar == ""
+            return s:beep()
+        endif
     endif
     let append = ""
     let original = @@
@@ -191,7 +312,7 @@ function! s:dosurround(...) " {{{1
         let append = matchstr(keeper,'\n*\%$')
         let keeper = substitute(keeper,'\n*\%$','','')
         let @@ = ""
-    elseif char == "s"
+    elseif char == "s" || char == "w" || char == "W"
         " Do nothing
         let @@ = ""
     elseif char =~ "[\"'`]"
@@ -241,24 +362,28 @@ function! s:dosurround(...) " {{{1
     let @@ = substitute(keeper,'\n\s+\n','\n\n','g')
     call setreg('"','','a'.regtype)
     silent exe "norm! ".(a:0 < 2 ? "" : "").pcmd.'`['
-    "if @@ =~ '\n'
-        "silent norm! '[=']
-    "endif
+    call s:reindent()
     if getline('.') =~ '^\s\+$' && keeper =~ '^\s*\n'
         silent norm! cc
     endif
     let @@ = removed
 endfunction " }}}1
 
-function! s:beep()
-    exe "norm! \<Esc>"
-    return ""
-endfunction
+function! s:changesurround() " {{{1
+    let a = s:inputtarget()
+    if a == ""
+        return s:beep()
+    endif
+    let b = s:inputreplacement()
+    if b == ""
+        return s:beep()
+    endif
+    call s:dosurround(a,b)
+endfunction " }}}1
 
 function! s:opfunc(type) " {{{1
-    let char = nr2char(getchar())
-    let g:count = v:count1
-    if char == "\<Esc>" || char == "\<C-C>"
+    let char = s:inputreplacement()
+    if char == ""
         return s:beep()
     endif
     let sel_save = &selection
@@ -289,32 +414,53 @@ function! s:opfunc(type) " {{{1
     let keeper = s:wrap(keeper,char,linemode) . append
     let @@ = keeper
     silent norm! gvp`[
-    "if linemode
-        "silent norm! '[=']
-    "endif
+    if linemode
+        call s:reindent()
+    endif
     let @@ = reg_save
     let &selection = sel_save
 endfunction " }}}1
 
-function! s:yss() range
-    echo a:firstline." ".a:lastline
+function! s:closematch()
+    " Close an open (, {, [, or < on the command line.
+    let tail = matchstr(getcmdline(),'.[^\[\](){}<>]*$')
+    if tail =~ '^\[.\+'
+        return "]"
+    elseif tail =~ '^(.\+'
+        return ")"
+    elseif tail =~ '^{.\+'
+        return "}"
+    elseif tail =~ '^<.+'
+        return ">"
+    else
+        return ""
+    endif
 endfunction
-nnoremap <silent> <Plug>DSurround :call <SID>dosurround(getchar())<CR>
-nnoremap <silent> <Plug>CSurround :call <SID>dosurround(getchar(),getchar())<CR>
-nnoremap <silent>  <SID>YSurround :set opfunc=<SID>opfunc<CR>g@
-nnoremap <silent> <Plug>YSurroundS :<C-U> call <SID>opfunc(v:count1)<CR>
-nnoremap <script> <Plug>YSurround <SID>YSurround
-vnoremap <silent> <Plug>VSurround :<C-U> call <SID>opfunc(visualmode())<CR>
+
+function! s:closedcmd()
+    let cm = s:closematch()
+    return getcmdline() . cm
+endfunction
+
+nnoremap <silent> <Plug>DSurround  :call <SID>dosurround(<SID>inputtarget())<CR>
+nnoremap <silent> <Plug>CSurround  :call <SID>changesurround()<CR>
+nnoremap <silent> <Plug>YSurround  :set opfunc=<SID>opfunc<CR>g@
+nnoremap <silent> <Plug>YSSurround :<C-U>call <SID>opfunc(v:count1)<CR>
+vnoremap <silent> <Plug>VSurround  :<C-U>call <SID>opfunc(visualmode())<CR>
+inoremap <silent> <Plug>ISurround  <C-R>=<SID>insert()<CR>
+
 
 nmap          ds   <Plug>DSurround
 nmap          cs   <Plug>CSurround
 nmap          ys   <Plug>YSurround
-"nmap <script> yss  :<C-U>exe 'norm ^ys'.v:count1.'$'.nr2char(getchar())<CR>
-nmap <script> yss  <SID>YSurroundS
+nmap          yss  <Plug>YSSurround
 if !hasmapto("<Plug>VSurround","v")
     vmap      s    <Plug>VSurround
 endif
+if !hasmapto("<Plug>ISurround","i")
+    imap     <C-S> <Plug>ISurround
+endif
+
 
 let &cpo = s:cpo_save
 
-" vim:set ft=vim ff=unix ts=8 sw=4 sts=4:
