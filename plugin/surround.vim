@@ -1,8 +1,8 @@
 " surround.vim - Surroundings
 " Maintainer:   Tim Pope <vimNOSPAM@tpope.info>
 " $Id$
-" Help is below; it may be read here, or :call SurroundHelp() to install it as
-" a help file.
+" Help is below; it may be read here.  Alternatively, after the plugin is
+" installed and running, :call SurroundHelp() to install a proper help file.
 
 " *surround.txt*  Plugin for deleting, changing, and adding "surroundings"
 "
