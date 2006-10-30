@@ -104,7 +104,9 @@
 " Three quote marks, ', ", `, represent themselves, in pairs.  They are only
 " searched for on the current line.
 "
-" A t is a pair of HTML or XML tags.  See |tag-blocks| for details.
+" A t is a pair of HTML or XML tags.  See |tag-blocks| for details.  Remember
+" that you can specify a numerical argument if you want to get to a tag other
+" than the innermost one.
 "
 " The letters w, W, and s correspond to a |word|, a |WORD|, and a |sentence|,
 " respectively.  These are special in that they have nothing do delete, and
@@ -229,6 +231,9 @@ endfunction
 
 function! s:inputtarget()
     let c = s:getchar()
+    while c =~ '^\d\+$'
+        let c = c . s:getchar()
+    endwhile
     if c == " "
         let c = c . s:getchar()
     endif
@@ -394,6 +399,10 @@ function! s:dosurround(...) " {{{1
     let scount = v:count1
     let char = (a:0 ? a:1 : s:inputtarget())
     let spc = ""
+    if char =~ '^\d\+'
+        let scount = scount * matchstr(char,'^\d\+')
+        let char = substitute(char,'^\d\+','','')
+    endif
     if char =~ '^ '
         let char = strpart(char,1)
         let spc = 1
