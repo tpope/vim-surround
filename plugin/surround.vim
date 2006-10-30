@@ -134,9 +134,7 @@
 "
 " An experimental replacement of a LaTeX environment is provided on \ and l.
 " The name of the environment and any arguments will be input from a prompt.
-" Opening and closing delimiters are not automatically placed on lines of
-" their own; you must arrange for this to happen.  The following shows the
-" resulting environment from csp\tabular}{lc<CR>
+" The following shows the resulting environment from csp\tabular}{lc<CR>
 " >
 "   \begin{tabular}{lc}
 "   \end{tabular}
@@ -144,10 +142,10 @@
 " Customizing:                                    *surround-customizing*
 "
 " The following adds a potential replacement on "-" (ASCII 45) in PHP files.
-" (To determine the ASCII code to use, :echo char2nr("-")).  The newline will
-" be replaced by the original text.
+" (To determine the ASCII code to use, :echo char2nr("-")).  The carriage
+" return will be replaced by the original text.
 " >
-"   autocmd FileType php let b:surround_45 = "<?php \n ?>"
+"   autocmd FileType php let b:surround_45 = "<?php \r ?>"
 " <
 " This can be used in a PHP file as in the following example.
 "
@@ -157,7 +155,8 @@
 " Additionally, one can use a global variable for globally available
 " replacements.
 " >
-"   let g:surround_45 = "<% \n %>"
+"   let g:surround_45 = "<% \r %>"
+"   let g:surround_61 = "<%= \r %>"
 " <
 " Issues:                                         *surround-issues*
 "
@@ -269,12 +268,57 @@ endfunction
 
 " }}}1
 
-function! s:wrap(string,char,...) " {{{1
+" Wrapping functions {{{1
+
+function! s:extractbefore(str)
+    if a:str =~ '\r'
+        return matchstr(a:str,'.*\ze\r')
+    else
+        return matchstr(a:str,'.*\ze\n')
+    endif
+endfunction
+
+function! s:extractafter(str)
+    if a:str =~ '\r'
+        return matchstr(a:str,'\r\zs.*')
+    else
+        return matchstr(a:str,'\n\zs.*')
+    endif
+endfunction
+
+function! s:repeat(str,count)
+    let cnt = a:count
+    let str = ""
+    while cnt > 0
+        let str = str . a:str
+        let cnt = cnt - 1
+    endwhile
+    return str
+endfunction
+
+function! s:fixindent(str,spc)
+    let str = substitute(a:str,'\t',s:repeat(' ',&sw),'g')
+    let spc = substitute(a:spc,'\t',s:repeat(' ',&sw),'g')
+    let str = substitute(str,'\n.\@=','\n'.spc,'g')
+    if ! &et
+        let str = substitute('\s\{'.&ts.'\}',"\t",'g')
+    endif
+    return str
+endfunction
+
+let g:surround_35 = "<%\n\t\r\n%>"
+
+function! s:wrap(string,char,...)
     let keeper = a:string
     let newchar = a:char
     let linemode = a:0 ? a:1 : 0
     let before = ""
     let after  = ""
+    if linemode
+        let initspaces = matchstr(keeper,'\%^\s*')
+    else
+        let initspaces = matchstr(getline('.'),'\%^\s*')
+    endif
     " Duplicate b's are just placeholders (removed)
     let pairs = "b()B{}r[]a<>"
     let extraspace = ""
@@ -284,21 +328,21 @@ function! s:wrap(string,char,...) " {{{1
     endif
     let idx = stridx(pairs,newchar)
     if exists("b:surround_".char2nr(newchar))
-        let before = matchstr(b:surround_{char2nr(newchar)},'.*\ze\n')
-        let after  = matchstr(b:surround_{char2nr(newchar)},'\n\zs.*')
+        let before = s:extractbefore(b:surround_{char2nr(newchar)})
+        let after  =  s:extractafter(b:surround_{char2nr(newchar)})
     elseif exists("g:surround_".char2nr(newchar))
-        let before = matchstr(g:surround_{char2nr(newchar)},'.*\ze\n')
-        let after  = matchstr(g:surround_{char2nr(newchar)},'\n\zs.*')
+        let before = s:extractbefore(g:surround_{char2nr(newchar)})
+        let after  =  s:extractafter(g:surround_{char2nr(newchar)})
     elseif newchar ==# "p"
         let before = "\n"
         let after  = "\n\n"
     elseif newchar ==# "t" || newchar ==# "T" || newchar == "<"
-        let dounmapr = 0
+        "let dounmapr = 0
         let dounmapb = 0
-        if !mapcheck("<CR>","c")
-            let dounmapr = 1
-            cnoremap <CR> ><CR>
-        endif
+        "if !mapcheck("<CR>","c")
+            "let dounmapr = 1
+            "cnoremap <CR> ><CR>
+        "endif
         if !mapcheck(">","c")
             let dounmapb= 1
             cnoremap > ><CR>
@@ -309,9 +353,9 @@ function! s:wrap(string,char,...) " {{{1
         endif
         let tag = input("<",default)
         echo "<".substitute(tag,'>*$','>','')
-        if dounmapr
-            silent! cunmap <CR>
-        endif
+        "if dounmapr
+            "silent! cunmap <CR>
+        "endif
         if dounmapb
             silent! cunmap >
         endif
@@ -321,12 +365,13 @@ function! s:wrap(string,char,...) " {{{1
             let after  = "</".substitute(tag," .*",'','').">"
         endif
     elseif newchar ==# 'l' || newchar == '\'
-        let env = input('\begin','{')
+        let env = input('\begin{')
+        let env = '{' . env
         let env = env . s:closematch(env)
         echo '\begin'.env
         if env != ""
-            let before = '\begin'.env
-            let after  = '\end'.matchstr(env,'[^}]*').'}'
+            let before = '\begin'.env."\n\t"
+            let after  = "\n".'\end'.matchstr(env,'[^}]*').'}'
         endif
     elseif newchar ==# 'f' || newchar ==# 'F'
         let func = input('function: ')
@@ -347,16 +392,31 @@ function! s:wrap(string,char,...) " {{{1
         let before = newchar
         let after  = newchar
     endif
+    if before =~ '\n\s\+\%$' && keeper =~ '\n'
+        let beforespc = substitute(matchstr(before,'\s\+\%$'),'\t',s:repeat(' ',&sw),'g')
+        let keeper = s:fixindent((linemode ? beforespc : "").keeper,beforespc)
+    endif
     if linemode || keeper =~ '\%^\s*\n'
         let before = substitute(before,'\s*\%$','','')
     endif
     if linemode || keeper =~ '\n\s*\%$'
         let after  = substitute(after,'\%^\s*','','')
     endif
+    let before = s:fixindent(before,initspaces)
+    let after  = s:fixindent(after,initspaces)
     if linemode
-        let initspaces = matchstr(keeper,'\%^\s*')
-        let keeper = initspaces.before."\n".keeper."\n".initspaces.after
+        if before !~ '\n\s*\%$'
+            let before = before."\n"
+        endif
+        if after !~ '\%^\n'
+            let after  = "\n".initspaces.after
+        endif
+        let keeper = initspaces.before.keeper.after
     else
+        " Good idea?
+        if keeper =~ '\n$' && after =~ '^\n' && after !~ '\n$'
+            let after = substitute(after,'^\n','','') . "\n"
+        endif
         let keeper = before.extraspace.keeper.extraspace.after
     endif
     return keeper
@@ -364,6 +424,7 @@ endfunction " }}}1
 
 function! s:insert(...) " {{{1
     " Optional argument causes the result to appear on 3 lines, not 1
+    call inputsave()
     let linemode = a:0 ? a:1 : 0
     let char = s:inputreplacement()
     while char == "\<CR>"
@@ -371,22 +432,33 @@ function! s:insert(...) " {{{1
         let linemode = linemode + 1
         let char = s:inputreplacement()
     endwhile
+    call inputrestore()
     if char == ""
         return ""
     endif
     " We could just use null, but nooooo, that won't work
-    let text = s:wrap("\1",char,0)
+    call inputsave()
+    let text = s:wrap("\r",char,0)
+    call inputrestore()
+    set paste
+    let nopaste = "\<Esc>:set nopaste\<CR>:\<BS>gi"
     if linemode
-        return substitute(text,'\s*\%x01\s*',"\<CR>",'')."\<C-O>O"
+        let first = matchstr(text,'.\{-\}\ze\s*\r')
+        let last  = matchstr(text,'\r\s*\zs.*')
+        let text =  first.nopaste."\<CR>".last."\<C-O>O"
+    elseif text =~ '\r\n'
+        " doesn't work with multiple newlines in second half.
+        let text = substitute(text,'\r\n',"\<CR>",'').nopaste."\<Up>\<End>"
     else
-        let len = strlen(substitute(substitute(text,'.*\%x01','',''),'.','.','g'))
+        let len = strlen(substitute(substitute(text,'.*\r','',''),'.','.','g'))
         let left = ""
         while len > 0
             let len = len - 1
             let left = left . "\<Left>"
         endwhile
-        return substitute(text,'\%x01','','') . left
+        let text = substitute(text,'\r','','') . left . nopaste
     endif
+    return text
 endfunction " }}}1
 
 function! s:reindent() " {{{1
@@ -406,6 +478,12 @@ function! s:dosurround(...) " {{{1
     if char =~ '^ '
         let char = strpart(char,1)
         let spc = 1
+    endif
+    if char == 'a'
+        let char = '>'
+    endif
+    if char == 'r'
+        let char = ']'
     endif
     let newchar = ""
     if a:0 > 1
@@ -485,8 +563,9 @@ function! s:dosurround(...) " {{{1
     let @@ = substitute(keeper,'\n\s+\n','\n\n','g')
     call setreg('"','','a'.regtype)
     silent exe "norm! ".(a:0 < 2 ? "" : "").pcmd.'`['
-    if removed =~ '\n' || okeeper =~ '\n'
+    if removed =~ '\n' || okeeper =~ '\n' || @@ =~ '\n'
         call s:reindent()
+    else
     endif
     if getline('.') =~ '^\s\+$' && keeper =~ '^\s*\n'
         silent norm! cc
@@ -538,9 +617,10 @@ function! s:opfunc(type) " {{{1
     endif
     let @@ = reg_save " s:wrap() may peek at this
     let keeper = s:wrap(keeper,char,linemode) . append
-    let @@ = keeper
+    call setreg('"',keeper,linemode ? 'V' : 'v')
+    "let @@ = keeper
     silent norm! gvp`[
-    if linemode
+    if linemode || @@ =~ '\n'
         call s:reindent()
     endif
     let @@ = reg_save
