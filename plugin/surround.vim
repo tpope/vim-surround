@@ -70,10 +70,13 @@
 "
 " In visual mode, a simple "s" with an argument wraps the selection.  This is
 " referred to as the *vs* mapping, although ordinarily there will be
-" additional keystrokes between the v and s.  Note that "s" already has a
-" valid meaning in visual mode, but it is identical to "c".  If you have
-" muscle memory for "s" and would like to use a different key, add your own
-" mapping and the existing one will be disabled.
+" additional keystrokes between the v and s.  In linewise visual mode, the
+" surroundings are placed on separate lines.  In blockwise visual mode, each
+" line is surrounded.
+"
+" Note that "s" already has a valid meaning in visual mode, but it is
+" identical to "c".  If you have muscle memory for "s" and would like to use a
+" different key, add your own mapping and the existing one will be disabled.
 " >
 "   vmap S <Plug>Vsurround
 " <
@@ -130,7 +133,8 @@
 "
 " If t or < is used, Vim prompts for an HTML/XML tag to insert.  You may
 " specify attributes here and they will be stripped from the closing tag.
-" End your input by pressing <CR> or >.
+" End your input by pressing <CR> or >.  As an experimental feature, if , or
+" <C-T> is used, the tags will appear on lines by themselves.
 "
 " An experimental replacement of a LaTeX environment is provided on \ and l.
 " The name of the environment and any arguments will be input from a prompt.
@@ -299,19 +303,18 @@ endfunction
 function! s:fixindent(str,spc)
     let str = substitute(a:str,'\t',s:repeat(' ',&sw),'g')
     let spc = substitute(a:spc,'\t',s:repeat(' ',&sw),'g')
-    let str = substitute(str,'\n.\@=','\n'.spc,'g')
+    let str = substitute(str,'\(\n\|\%^\).\@=','\1'.spc,'g')
     if ! &et
         let str = substitute('\s\{'.&ts.'\}',"\t",'g')
     endif
     return str
 endfunction
 
-let g:surround_35 = "<%\n\t\r\n%>"
-
 function! s:wrap(string,char,...)
     let keeper = a:string
     let newchar = a:char
-    let linemode = a:0 ? a:1 : 0
+    let type = a:0 ? (a:1 == 1 ? 'V' : a:1 ) : 'v'
+    let linemode = type ==# 'V' ? 1 : 0
     let before = ""
     let after  = ""
     if linemode
@@ -336,7 +339,7 @@ function! s:wrap(string,char,...)
     elseif newchar ==# "p"
         let before = "\n"
         let after  = "\n\n"
-    elseif newchar ==# "t" || newchar ==# "T" || newchar == "<"
+    elseif newchar =~# "[tT\<C-T><,]"
         "let dounmapr = 0
         let dounmapb = 0
         "if !mapcheck("<CR>","c")
@@ -349,7 +352,10 @@ function! s:wrap(string,char,...)
         endif
         let default = ""
         if newchar ==# "T"
-            let default = matchstr(@@,'<\zs.\{-\}\ze>')
+            if !exists("s:lastdel")
+                let s:lastdel = ""
+            endif
+            let default = matchstr(s:lastdel,'<\zs.\{-\}\ze>')
         endif
         let tag = input("<",default)
         echo "<".substitute(tag,'>*$','>','')
@@ -363,6 +369,15 @@ function! s:wrap(string,char,...)
             let tag = substitute(tag,'>*$','','')
             let before = "<".tag.">"
             let after  = "</".substitute(tag," .*",'','').">"
+            if newchar == "\<C-T>" || newchar == ","
+                if type ==# "v" || type ==# "V"
+                    let before = before . "\n\t"
+                endif
+                if type ==# "v"
+                    "let keeper = initspaces.keeper
+                    let after  = "\n" . initspaces . after
+                endif
+            endif
         endif
     elseif newchar ==# 'l' || newchar == '\'
         let env = input('\begin{')
@@ -370,13 +385,20 @@ function! s:wrap(string,char,...)
         let env = env . s:closematch(env)
         echo '\begin'.env
         if env != ""
-            let before = '\begin'.env."\n\t"
-            let after  = "\n".'\end'.matchstr(env,'[^}]*').'}'
+            let before = '\begin'.env
+            let after  = '\end'.matchstr(env,'[^}]*').'}'
+        endif
+        if type ==# 'v' || type ==# 'V'
+            let before = before ."\n\t"
+        endif
+        if type ==# 'v'
+            let after  = "\n".initspaces.after
+            "let keeper = initspaces.keeper
         endif
     elseif newchar ==# 'f' || newchar ==# 'F'
-        let func = input('function: ')
-        if func != ""
-            let before = substitute(func,'($','','').'('
+        let fnc = input('function: ')
+        if fnc != ""
+            let before = substitute(fnc,'($','','').'('
             let after  = ')'
             if newchar ==# 'F'
                 let before = before . ' '
@@ -392,39 +414,54 @@ function! s:wrap(string,char,...)
         let before = newchar
         let after  = newchar
     endif
-    if before =~ '\n\s\+\%$' && keeper =~ '\n'
-        let beforespc = substitute(matchstr(before,'\s\+\%$'),'\t',s:repeat(' ',&sw),'g')
-        let keeper = s:fixindent((linemode ? beforespc : "").keeper,beforespc)
-    endif
-    if linemode || keeper =~ '\%^\s*\n'
-        let before = substitute(before,'\s*\%$','','')
-    endif
-    if linemode || keeper =~ '\n\s*\%$'
-        let after  = substitute(after,'\%^\s*','','')
-    endif
-    let before = s:fixindent(before,initspaces)
-    let after  = s:fixindent(after,initspaces)
-    if linemode
-        if before !~ '\n\s*\%$'
+    if type ==# 'V'
+        let before = initspaces.before
+        let after  = initspaces.after
+        let before = substitute(before,' \+$','','')
+        let after  = substitute(after ,'^ \+','','')
+        if before !~ '\n\s*$'
             let before = before."\n"
         endif
-        if after !~ '\%^\n'
-            let after  = "\n".initspaces.after
+        let after  = initspaces.after
+        "let before = substitute(before,'\n\n$','\n','')
+        "let after  = substitute(after ,'\n\n$','\n','')
+    endif
+    if before =~ '\n\s*\%$'
+        if type ==# 'v'
+            let keeper = initspaces.keeper
         endif
-        let keeper = initspaces.before.keeper.after
+        let padding = matchstr(before,'\n\zs\s\+\%$')
+        let before  = substitute(before,'\n\s\+\%$','\n','')
+        let keeper = s:fixindent(keeper,padding)
+    endif
+    "if linemode || keeper =~ '\%^\s*\n'
+        "let before = substitute(before,' *\%$','','')
+    "endif
+    "if linemode || keeper =~ '\n\s*\%$'
+        "let after  = substitute(after,'\%^ *','','')
+    "endif
+    if type ==# 'V'
+        let keeper = before.keeper.after
+    elseif type =~ "^\<C-V>"
+        let keeper = substitute(keeper."\n",'\(.\{-\}\)\n',before.'\1'.after.'\n','g')
+        let g:vis = keeper
     else
-        " Good idea?
-        if keeper =~ '\n$' && after =~ '^\n' && after !~ '\n$'
-            let after = substitute(after,'^\n','','') . "\n"
-        endif
         let keeper = before.extraspace.keeper.extraspace.after
     endif
     return keeper
-endfunction " }}}1
+endfunction
+
+function! s:wrapreg(reg,char)
+    let orig = getreg(a:reg)
+    let type = getregtype(a:reg)
+    let new = s:wrap(orig,a:char,type)
+    call setreg(a:reg,new,type)
+endfunction
+" }}}1
 
 function! s:insert(...) " {{{1
     " Optional argument causes the result to appear on 3 lines, not 1
-    call inputsave()
+    "call inputsave()
     let linemode = a:0 ? a:1 : 0
     let char = s:inputreplacement()
     while char == "\<CR>"
@@ -432,19 +469,22 @@ function! s:insert(...) " {{{1
         let linemode = linemode + 1
         let char = s:inputreplacement()
     endwhile
-    call inputrestore()
+    "call inputrestore()
     if char == ""
         return ""
     endif
     " We could just use null, but nooooo, that won't work
-    call inputsave()
-    let text = s:wrap("\r",char,0)
-    call inputrestore()
+    "call inputsave()
+    call setreg('"',"\r",'c')
+    call s:wrapreg('"',char)
+    let text = @@
+    "let text = s:wrap("\r",char,0)
+    "call inputrestore()
     set paste
     let nopaste = "\<Esc>:set nopaste\<CR>:\<BS>gi"
     if linemode
-        let first = matchstr(text,'.\{-\}\ze\s*\r')
-        let last  = matchstr(text,'\r\s*\zs.*')
+        let first = substitute(matchstr(text,'.\{-\}\ze\s*\r'),'\n$','','')
+        let last  = substitute(matchstr(text,'\r\s*\zs.*'),'^\n\s*','','')
         let text =  first.nopaste."\<CR>".last."\<C-O>O"
     elseif text =~ '\r\n'
         " doesn't work with multiple newlines in second half.
@@ -493,84 +533,75 @@ function! s:dosurround(...) " {{{1
         endif
     endif
     let append = ""
-    let original = @@
-    let @@ = ""
+    let original = getreg('"')
+    let otype = getregtype('"')
+    call setreg('"',"")
     exe "norm d".(scount==1 ? "": scount)."i".char
     "exe "norm vi".char."d"
-    let keeper = @@
+    let keeper = getreg('"')
     let okeeper = keeper " for reindent below
-    if @@ == ""
-        let @@ = original
+    if keeper == ""
+        call setreg('"',original,otype)
         return ""
     endif
     let oldline = getline('.')
     let oldlnum = line('.')
     if char ==# "p"
-        let append = matchstr(keeper,'\n*\%$')
-        let keeper = substitute(keeper,'\n*\%$','','')
-        let @@ = ""
+        "let append = matchstr(keeper,'\n*\%$')
+        "let keeper = substitute(keeper,'\n*\%$','','')
+        call setreg('"','','V')
     elseif char ==# "s" || char ==# "w" || char ==# "W"
         " Do nothing
-        let @@ = ""
+        call setreg('"','')
     elseif char =~ "[\"'`]"
         exe "norm! i \<Esc>d2i".char
-        let @@ = substitute(@@,' ','','')
+        call setreg('"',substitute(getreg('"'),' ','',''))
     else
         exe "norm! da".char
     endif
-    let removed = @@
+    let removed = getreg('"')
     let rem2 = substitute(removed,'\n.*','','')
     let oldhead = strpart(oldline,0,strlen(oldline)-strlen(rem2))
     let oldtail = strpart(oldline,  strlen(oldline)-strlen(rem2))
-    "let g:oldhead = oldhead
-    "let g:oldtail = oldtail
-    "let g:rem2 = rem2
-    "let g:keeper = keeper
     let regtype = getregtype('"')
+    if char == 'p'
+        let regtype = "V"
+    endif
     if char =~# '[\[({<T]' || spc
         let keeper = substitute(keeper,'^\s\+','','')
         let keeper = substitute(keeper,'\s\+$','','')
     endif
-    if oldtail ==# rem2 && col('.') + 1 == col('$')
+    if col("']") == col("$") && col('.') + 1 == col('$')
+        "let keeper = substitute(keeper,'^\n\s*','','')
+        "let keeper = substitute(keeper,'\n\s*$','','')
         if oldhead =~# '^\s*$' && a:0 < 2
-            "let keeper = substitute(keeper,'\n\s*','\n','')
-            let keeper = substitute(keeper,oldhead.'\%$','','')
+            "let keeper = substitute(keeper,oldhead.'\%$','','')
             let keeper = substitute(keeper,'\%^\n'.oldhead.'\(\s*.\{-\}\)\n\s*\%$','\1','')
         endif
         let pcmd = "p"
     else
         if oldhead == "" && a:0 < 2
-            let keeper = substitute(keeper,'\%^\n\(.*\)\n\%$','\1','')
+            "let keeper = substitute(keeper,'\%^\n\(.*\)\n\%$','\1','')
         endif
         let pcmd = "P"
     endif
     if line('.') < oldlnum && regtype ==# "V"
         let pcmd = "p"
     endif
-    if removed =~ '\n$'
-        let keeper = keeper."\n"
-        let removed = substitute(removed,'\n$','','')
-    endif
-    " Originally was done twice on purpose
-    "if removed =~ '\n'
-        "let keeper = keeper . "\n"
-        "let removed = substitute(removed,'\n','','')
-    "endif
-    "let g:removed = removed
+    call setreg('"',keeper,regtype)
     if newchar != ""
-        let keeper = s:wrap(keeper,newchar,char ==# "p") . append
+        call s:wrapreg('"',newchar)
     endif
-    let @@ = substitute(keeper,'\n\s+\n','\n\n','g')
-    call setreg('"','','a'.regtype)
-    silent exe "norm! ".(a:0 < 2 ? "" : "").pcmd.'`['
-    if removed =~ '\n' || okeeper =~ '\n' || @@ =~ '\n'
+    silent exe "norm! ".pcmd.'`['
+    if removed =~ '\n' || okeeper =~ '\n' || getreg('"') =~ '\n'
         call s:reindent()
     else
     endif
     if getline('.') =~ '^\s\+$' && keeper =~ '^\s*\n'
         silent norm! cc
     endif
-    let @@ = removed
+    call setreg('"',removed,regtype)
+    let s:lastdel = removed
 endfunction " }}}1
 
 function! s:changesurround() " {{{1
@@ -590,40 +621,38 @@ function! s:opfunc(type) " {{{1
     if char == ""
         return s:beep()
     endif
+    let reg = '"'
     let sel_save = &selection
     let &selection = "inclusive"
-    let reg_save = @@
-    let linemode = (a:type == "line" || a:type ==# "V")
+    let reg_save = getreg(reg)
+    let reg_type = getregtype(reg)
+    let type = a:type
     if a:type == "char"
-        silent norm! `[v`]y
+        silent exe 'norm! `[v`]"'.reg."y"
+        let type = 'v'
     elseif a:type == "line"
-        silent norm! '[V']y
-    elseif a:type ==# "v" || a:type ==# "V"
-        silent norm! gvy
+        silent exe 'norm! `[V`]"'.reg."y"
+        let type = 'V'
+    elseif a:type ==# "v" || a:type ==# "V" || a:type ==# "\<C-V>"
+        silent exe 'norm! gv"'.reg."y"
     elseif a:type =~ '^\d\+$'
-        silent exe 'norm! ^v'.a:type.'$hy'
+        silent exe 'norm! ^v'.a:type.'$h"'.reg.'y'
     else
         let &selection = sel_save
         return s:beep()
     endif
-    let keeper = @@
-    let append = ""
-    if linemode
-        let append = matchstr(keeper,'\n*$')
-        let keeper = substitute(keeper,'\n*$','','')
-    else
+    let keeper = getreg(reg)
+    if type == "v"
         let append = matchstr(keeper,'\s*$')
         let keeper = substitute(keeper,'\s*$','','')
     endif
-    let @@ = reg_save " s:wrap() may peek at this
-    let keeper = s:wrap(keeper,char,linemode) . append
-    call setreg('"',keeper,linemode ? 'V' : 'v')
-    "let @@ = keeper
-    silent norm! gvp`[
-    if linemode || @@ =~ '\n'
+    call setreg(reg,keeper,type)
+    call s:wrapreg(reg,char)
+    silent exe 'norm! gv'.(reg == '"' ? '' : '"' . reg).'p`['
+    if type == 'V' || getreg(reg) =~ '\n'
         call s:reindent()
     endif
-    let @@ = reg_save
+    call setreg(reg,reg_save,reg_type)
     let &selection = sel_save
 endfunction " }}}1
 
