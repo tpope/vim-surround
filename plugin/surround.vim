@@ -383,7 +383,7 @@ function! s:wrap(string,char,type,...)
                     let before = before . "\n\t"
                 endif
                 if type ==# "v"
-                    let after  = "\n" . initspaces . after
+                    let after  = "\n". after
                 endif
             endif
         endif
@@ -422,6 +422,8 @@ function! s:wrap(string,char,type,...)
         let before = newchar
         let after  = newchar
     endif
+    "let before = substitute(before,'\n','\n'.initspaces,'g')
+    let after  = substitute(after ,'\n','\n'.initspaces,'g')
     if type ==# 'V' || (special && type ==# "v")
         let before = substitute(before,' \+$','','')
         let after  = substitute(after ,'^ \+','','')
@@ -503,6 +505,7 @@ function! s:insert(...) " {{{1
     endif
     call search('\r','bW')
     return "\<Del>"
+    " Old implementation follows
     let @@ = reg_save
     "let text = s:wrap("\r",char,0)
     "call inputrestore()
