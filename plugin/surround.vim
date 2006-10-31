@@ -68,25 +68,33 @@
 "   Old text                  Command     New text ~
 "       Hello w*orld!         yssB            {Hello world!}
 "
+" There is also *yS* and *ySS* which indent the surrounded text and place it
+" on a line of its own.
+"
 " In visual mode, a simple "s" with an argument wraps the selection.  This is
 " referred to as the *vs* mapping, although ordinarily there will be
 " additional keystrokes between the v and s.  In linewise visual mode, the
 " surroundings are placed on separate lines.  In blockwise visual mode, each
 " line is surrounded.
 "
-" Note that "s" already has a valid meaning in visual mode, but it is
+" An "S" in visual mode (*vS*) behaves similarly but always places the
+" surroundings on separate lines.  Additionally, the surrounded text is
+" indented.
+"
+" Note that "s" and "S" already have valid meaning in visual mode, but it is
 " identical to "c".  If you have muscle memory for "s" and would like to use a
 " different key, add your own mapping and the existing one will be disabled.
 " >
-"   vmap S <Plug>Vsurround
+"   vmap <Leader>s <Plug>Vsurround
+"   vmap <Leader>S <Plug>VSurround
 " <
 " Finally, there is an experimental insert mode mapping on <C-S>.  Beware that
 " this won't work on terminals with flow control (if you accidentally freeze
 " your terminal, use <C-Q> to unfreeze it).  The mapping inserts the specified
 " surroundings and puts the cursor between them.  If, immediately after <C-S>
-" and before the replacement, carriage return is pressed, the prefix, cursor,
-" and suffix will be placed on three separate lines.  If this is a common use
-" case you can add a mapping for it as well.
+" and before the replacement, a second <C-S> or carriage return is pressed,
+" the prefix, cursor, and suffix will be placed on three separate lines.  If
+" this is a common use case you can add a mapping for it as well.
 " >
 "   imap <C-Z> <Plug>Isurround<CR>
 " <
@@ -253,7 +261,7 @@ function! s:inputreplacement()
     if c == " "
         let c = c . s:getchar()
     endif
-    if c =~ "\<Esc>\|\<C-C>\|\0"
+    if c =~ "\<Esc>" || c =~ "\<C-C>"
         return ""
     else
         return c
@@ -310,14 +318,15 @@ function! s:fixindent(str,spc)
     return str
 endfunction
 
-function! s:wrap(string,char,...)
+function! s:wrap(string,char,type,...)
     let keeper = a:string
     let newchar = a:char
-    let type = a:0 ? (a:1 == 1 ? 'V' : a:1 ) : 'v'
+    let type = a:type
     let linemode = type ==# 'V' ? 1 : 0
+    let special = a:0 ? a:1 : 0
     let before = ""
     let after  = ""
-    if linemode
+    if type == "V"
         let initspaces = matchstr(keeper,'\%^\s*')
     else
         let initspaces = matchstr(getline('.'),'\%^\s*')
@@ -374,12 +383,12 @@ function! s:wrap(string,char,...)
                     let before = before . "\n\t"
                 endif
                 if type ==# "v"
-                    "let keeper = initspaces.keeper
                     let after  = "\n" . initspaces . after
                 endif
             endif
         endif
     elseif newchar ==# 'l' || newchar == '\'
+        " LaTeX
         let env = input('\begin{')
         let env = '{' . env
         let env = env . s:closematch(env)
@@ -388,13 +397,12 @@ function! s:wrap(string,char,...)
             let before = '\begin'.env
             let after  = '\end'.matchstr(env,'[^}]*').'}'
         endif
-        if type ==# 'v' || type ==# 'V'
-            let before = before ."\n\t"
-        endif
-        if type ==# 'v'
-            let after  = "\n".initspaces.after
-            "let keeper = initspaces.keeper
-        endif
+        "if type ==# 'v' || type ==# 'V'
+            "let before = before ."\n\t"
+        "endif
+        "if type ==# 'v'
+            "let after  = "\n".initspaces.after
+        "endif
     elseif newchar ==# 'f' || newchar ==# 'F'
         let fnc = input('function: ')
         if fnc != ""
@@ -414,18 +422,26 @@ function! s:wrap(string,char,...)
         let before = newchar
         let after  = newchar
     endif
-    if type ==# 'V'
-        let before = initspaces.before
-        let after  = initspaces.after
+    if type ==# 'V' || (special && type ==# "v")
         let before = substitute(before,' \+$','','')
         let after  = substitute(after ,'^ \+','','')
-        if before !~ '\n\s*$'
-            let before = before."\n"
+        if after !~ '^\n'
+            let after  = initspaces.after
         endif
-        let after  = initspaces.after
-        "let before = substitute(before,'\n\n$','\n','')
-        "let after  = substitute(after ,'\n\n$','\n','')
+        if keeper !~ '\n$' && after !~ '^\n'
+            let keeper = keeper . "\n"
+        endif
+        if before !~ '\n\s*$'
+            let before = before . "\n"
+            if special
+                let before = before . "\t"
+            endif
+        endif
     endif
+    if type ==# 'V'
+        let before = initspaces.before
+    endif
+    let g:initspc = initspaces
     if before =~ '\n\s*\%$'
         if type ==# 'v'
             let keeper = initspaces.keeper
@@ -444,17 +460,17 @@ function! s:wrap(string,char,...)
         let keeper = before.keeper.after
     elseif type =~ "^\<C-V>"
         let keeper = substitute(keeper."\n",'\(.\{-\}\)\n',before.'\1'.after.'\n','g')
-        let g:vis = keeper
     else
         let keeper = before.extraspace.keeper.extraspace.after
     endif
     return keeper
 endfunction
 
-function! s:wrapreg(reg,char)
+function! s:wrapreg(reg,char,...)
     let orig = getreg(a:reg)
     let type = getregtype(a:reg)
-    let new = s:wrap(orig,a:char,type)
+    let special = a:0 ? a:1 : 0
+    let new = s:wrap(orig,a:char,type,special)
     call setreg(a:reg,new,type)
 endfunction
 " }}}1
@@ -464,7 +480,7 @@ function! s:insert(...) " {{{1
     "call inputsave()
     let linemode = a:0 ? a:1 : 0
     let char = s:inputreplacement()
-    while char == "\<CR>"
+    while char == "\<CR>" || char == "\<C-S>"
         " TODO: use total count for additional blank lines
         let linemode = linemode + 1
         let char = s:inputreplacement()
@@ -473,11 +489,21 @@ function! s:insert(...) " {{{1
     if char == ""
         return ""
     endif
-    " We could just use null, but nooooo, that won't work
     "call inputsave()
-    call setreg('"',"\r",'c')
-    call s:wrapreg('"',char)
-    let text = @@
+    let reg_save = @@
+    call setreg('"',"\r",'v')
+    call s:wrapreg('"',char,linemode)
+    "if linemode
+        "call setreg('"',substitute(getreg('"'),'^\s\+','',''),'c')
+    "endif
+    if col('.') > col('$')
+        norm! p`]
+    else
+        norm! P`]
+    endif
+    call search('\r','bW')
+    return "\<Del>"
+    let @@ = reg_save
     "let text = s:wrap("\r",char,0)
     "call inputrestore()
     set paste
@@ -616,7 +642,7 @@ function! s:changesurround() " {{{1
     call s:dosurround(a,b)
 endfunction " }}}1
 
-function! s:opfunc(type) " {{{1
+function! s:opfunc(type,...) " {{{1
     let char = s:inputreplacement()
     if char == ""
         return s:beep()
@@ -647,13 +673,17 @@ function! s:opfunc(type) " {{{1
         let keeper = substitute(keeper,'\s*$','','')
     endif
     call setreg(reg,keeper,type)
-    call s:wrapreg(reg,char)
+    call s:wrapreg(reg,char,a:0)
     silent exe 'norm! gv'.(reg == '"' ? '' : '"' . reg).'p`['
     if type == 'V' || getreg(reg) =~ '\n'
         call s:reindent()
     endif
     call setreg(reg,reg_save,reg_type)
     let &selection = sel_save
+endfunction
+
+function! s:opfunc2(arg)
+    call s:opfunc(a:arg,1)
 endfunction " }}}1
 
 function! s:closematch(str) " {{{1
@@ -675,21 +705,32 @@ endfunction " }}}1
 nnoremap <silent> <Plug>Dsurround  :<C-U>call <SID>dosurround(<SID>inputtarget())<CR>
 nnoremap <silent> <Plug>Csurround  :<C-U>call <SID>changesurround()<CR>
 nnoremap <silent> <Plug>Ysurround  :set opfunc=<SID>opfunc<CR>g@
+nnoremap <silent> <Plug>YSurround  :set opfunc=<SID>opfunc2<CR>g@
 nnoremap <silent> <Plug>Yssurround :<C-U>call <SID>opfunc(v:count1)<CR>
+nnoremap <silent> <Plug>YSsurround :<C-U>call <SID>opfunc2(v:count1)<CR>
 vnoremap <silent> <Plug>Vsurround  :<C-U>call <SID>opfunc(visualmode())<CR>
+vnoremap <silent> <Plug>VSurround  :<C-U>call <SID>opfunc2(visualmode())<CR>
 inoremap <silent> <Plug>Isurround  <C-R>=<SID>insert()<CR>
+inoremap <silent> <Plug>ISurround  <C-R>=<SID>insert(1)<CR>
 
 if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
     nmap          ds   <Plug>Dsurround
     nmap          cs   <Plug>Csurround
     nmap          ys   <Plug>Ysurround
+    nmap          yS   <Plug>YSurround
     nmap          yss  <Plug>Yssurround
+    nmap          ySs  <Plug>YSsurround
+    nmap          ySS  <Plug>YSsurround
     if !hasmapto("<Plug>Vsurround","v")
         vmap      s    <Plug>Vsurround
+    endif
+    if !hasmapto("<Plug>VSurround","v")
+        vmap      S    <Plug>VSurround
     endif
     if !hasmapto("<Plug>Isurround","i")
         imap     <C-S> <Plug>Isurround
     endif
+    "imap     <C-S><C-S> <Plug>ISurround
 endif
 
 let &cpo = s:cpo_save
