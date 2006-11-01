@@ -452,16 +452,13 @@ function! s:wrap(string,char,type,...)
         let before  = substitute(before,'\n\s\+\%$','\n','')
         let keeper = s:fixindent(keeper,padding)
     endif
-    "if linemode || keeper =~ '\%^\s*\n'
-        "let before = substitute(before,' *\%$','','')
-    "endif
-    "if linemode || keeper =~ '\n\s*\%$'
-        "let after  = substitute(after,'\%^ *','','')
-    "endif
     if type ==# 'V'
         let keeper = before.keeper.after
     elseif type =~ "^\<C-V>"
-        let keeper = substitute(keeper."\n",'\(.\{-\}\)\n',before.'\1'.after.'\n','g')
+        " Really we should be iterating over the buffer
+        let repl = substitute(before,'[\\~]','\\&','g').'\1'.substitute(after,'[\\~]','\\&','g')
+        let repl = substitute(repl,'\n',' ','g')
+        let keeper = substitute(keeper."\n",'\(.\{-\}\)\n',repl.'\n','g')
     else
         let keeper = before.extraspace.keeper.extraspace.after
     endif
@@ -505,29 +502,6 @@ function! s:insert(...) " {{{1
     endif
     call search('\r','bW')
     return "\<Del>"
-    " Old implementation follows
-    let @@ = reg_save
-    "let text = s:wrap("\r",char,0)
-    "call inputrestore()
-    set paste
-    let nopaste = "\<Esc>:set nopaste\<CR>:\<BS>gi"
-    if linemode
-        let first = substitute(matchstr(text,'.\{-\}\ze\s*\r'),'\n$','','')
-        let last  = substitute(matchstr(text,'\r\s*\zs.*'),'^\n\s*','','')
-        let text =  first.nopaste."\<CR>".last."\<C-O>O"
-    elseif text =~ '\r\n'
-        " doesn't work with multiple newlines in second half.
-        let text = substitute(text,'\r\n',"\<CR>",'').nopaste."\<Up>\<End>"
-    else
-        let len = strlen(substitute(substitute(text,'.*\r','',''),'.','.','g'))
-        let left = ""
-        while len > 0
-            let len = len - 1
-            let left = left . "\<Left>"
-        endwhile
-        let text = substitute(text,'\r','','') . left . nopaste
-    endif
-    return text
 endfunction " }}}1
 
 function! s:reindent() " {{{1
@@ -733,6 +707,7 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
     if !hasmapto("<Plug>Isurround","i")
         imap     <C-S> <Plug>Isurround
     endif
+    "Implemented internally instead
     "imap     <C-S><C-S> <Plug>ISurround
 endif
 
