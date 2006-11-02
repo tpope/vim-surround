@@ -1,5 +1,6 @@
 " surround.vim - Surroundings
 " Maintainer:   Tim Pope <vimNOSPAM@tpope.info>
+" GetLatestVimScripts: 1697 1 :AutoInstall: surround.vim
 " $Id$
 " Help is below; it may be read here.  Alternatively, after the plugin is
 " installed and running, :call SurroundHelp() to install a proper help file.
@@ -79,7 +80,8 @@
 "
 " An "S" in visual mode (*vS*) behaves similarly but always places the
 " surroundings on separate lines.  Additionally, the surrounded text is
-" indented.
+" indented.  In blockwise visual mode, using "S" instead of "s" instead skips
+" trailing whitespace.
 "
 " Note that "s" and "S" already have valid meaning in visual mode, but it is
 " identical to "c".  If you have muscle memory for "s" and would like to use a
@@ -443,7 +445,6 @@ function! s:wrap(string,char,type,...)
     if type ==# 'V'
         let before = initspaces.before
     endif
-    let g:initspc = initspaces
     if before =~ '\n\s*\%$'
         if type ==# 'v'
             let keeper = initspaces.keeper
@@ -458,7 +459,8 @@ function! s:wrap(string,char,type,...)
         " Really we should be iterating over the buffer
         let repl = substitute(before,'[\\~]','\\&','g').'\1'.substitute(after,'[\\~]','\\&','g')
         let repl = substitute(repl,'\n',' ','g')
-        let keeper = substitute(keeper."\n",'\(.\{-\}\)\n',repl.'\n','g')
+        let keeper = substitute(keeper."\n",'\(.\{-\}\)\('.(special ? '\s\{-\}' : '').'\n\)',repl.'\n','g')
+        let keeper = substitute(keeper,'\n\%$','','')
     else
         let keeper = before.extraspace.keeper.extraspace.after
     endif
@@ -467,7 +469,7 @@ endfunction
 
 function! s:wrapreg(reg,char,...)
     let orig = getreg(a:reg)
-    let type = getregtype(a:reg)
+    let type = substitute(getregtype(a:reg),'\d\+$','','')
     let special = a:0 ? a:1 : 0
     let new = s:wrap(orig,a:char,type,special)
     call setreg(a:reg,new,type)
@@ -652,7 +654,7 @@ function! s:opfunc(type,...) " {{{1
     call setreg(reg,keeper,type)
     call s:wrapreg(reg,char,a:0)
     silent exe 'norm! gv'.(reg == '"' ? '' : '"' . reg).'p`['
-    if type == 'V' || getreg(reg) =~ '\n'
+    if type == 'V' || (getreg(reg) =~ '\n' && type == 'v')
         call s:reindent()
     endif
     call setreg(reg,reg_save,reg_type)
