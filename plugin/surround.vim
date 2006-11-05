@@ -132,9 +132,9 @@
 " Replacements:                                   *surround-replacements*
 "
 " A replacement argument is a single character, and is required by |cs|, |ys|,
-" and |vs|.  Undefined replacement characters default to placing themselves at
-" the beginning and end of the destination, which can be useful for characters
-" like / and |.
+" and |vs|.  Undefined replacement characters (with the exception of
+" alphabetic characters) default to placing themselves at the beginning and
+" end of the destination, which can be useful for characters like / and |.
 "
 " If either ), }, ], or > is used, the text is wrapped in the appropriate
 " pair of characters.  Similar behavior can be found with (, {, and [ (but not
@@ -420,9 +420,12 @@ function! s:wrap(string,char,type,...)
         let idx = idx / 3 * 3
         let before = strpart(pairs,idx+1,1) . spc
         let after  = spc . strpart(pairs,idx+2,1)
-    else
+    elseif newchar !~ '\a'
         let before = newchar
         let after  = newchar
+    else
+        let before = ''
+        let after  = ''
     endif
     "let before = substitute(before,'\n','\n'.initspaces,'g')
     let after  = substitute(after ,'\n','\n'.initspaces,'g')
