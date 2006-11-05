@@ -315,7 +315,7 @@ function! s:fixindent(str,spc)
     let spc = substitute(a:spc,'\t',s:repeat(' ',&sw),'g')
     let str = substitute(str,'\(\n\|\%^\).\@=','\1'.spc,'g')
     if ! &et
-        let str = substitute('\s\{'.&ts.'\}',"\t",'g')
+        let str = substitute(str,'\s\{'.&ts.'\}',"\t",'g')
     endif
     return str
 endfunction
@@ -426,6 +426,7 @@ function! s:wrap(string,char,type,...)
     endif
     "let before = substitute(before,'\n','\n'.initspaces,'g')
     let after  = substitute(after ,'\n','\n'.initspaces,'g')
+    "let after  = substitute(after,"\n\\s*\<C-U>\\s*",'\n','g')
     if type ==# 'V' || (special && type ==# "v")
         let before = substitute(before,' \+$','','')
         let after  = substitute(after ,'^ \+','','')
@@ -503,6 +504,7 @@ function! s:insert(...) " {{{1
         norm! P`]
     endif
     call search('\r','bW')
+    let @@ = reg_save
     return "\<Del>"
 endfunction " }}}1
 
@@ -653,6 +655,9 @@ function! s:opfunc(type,...) " {{{1
     endif
     call setreg(reg,keeper,type)
     call s:wrapreg(reg,char,a:0)
+    if type == "v" && append != ""
+        call setreg(reg,append,"ac")
+    endif
     silent exe 'norm! gv'.(reg == '"' ? '' : '"' . reg).'p`['
     if type == 'V' || (getreg(reg) =~ '\n' && type == 'v')
         call s:reindent()
