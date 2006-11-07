@@ -90,16 +90,15 @@
 "   vmap <Leader>s <Plug>Vsurround
 "   vmap <Leader>S <Plug>VSurround
 " <
-" Finally, there is an experimental insert mode mapping on <C-S>.  Beware that
-" this won't work on terminals with flow control (if you accidentally freeze
-" your terminal, use <C-Q> to unfreeze it).  The mapping inserts the specified
-" surroundings and puts the cursor between them.  If, immediately after <C-S>
-" and before the replacement, a second <C-S> or carriage return is pressed,
-" the prefix, cursor, and suffix will be placed on three separate lines.  If
-" this is a common use case you can add a mapping for it as well.
-" >
-"   imap <C-Z> <Plug>Isurround<CR>
-" <
+"                                                 *i_CTRL-G_s* *i_CTRL-G_S*
+" Finally, there is an experimental insert mode mapping on <C-G>s and <C-S>.
+" Beware that the latter won't work on terminals with flow control (if you
+" accidentally freeze your terminal, use <C-Q> to unfreeze it).  The mapping
+" inserts the specified surroundings and puts the cursor between them.  If,
+" immediately after the mapping and before the replacement, a second <C-S> or
+" carriage return is pressed, the prefix, cursor, and suffix will be placed on
+" three separate lines.  <C-G>S (not <C-G>s) also exhibits this behavior.
+"
 " Targets:                                        *surround-targets*
 "
 " The |ds| and |cs| commands both take a target as their first argument.  The
@@ -638,7 +637,7 @@ function! s:opfunc(type,...) " {{{1
     let reg_type = getregtype(reg)
     let type = a:type
     if a:type == "char"
-        silent exe 'norm! `[v`]"'.reg."y"
+        silent exe 'norm! v`[o`]"'.reg."y"
         let type = 'v'
     elseif a:type == "line"
         silent exe 'norm! `[V`]"'.reg."y"
@@ -652,9 +651,9 @@ function! s:opfunc(type,...) " {{{1
         return s:beep()
     endif
     let keeper = getreg(reg)
-    if type == "v"
-        let append = matchstr(keeper,'\s*$')
-        let keeper = substitute(keeper,'\s*$','','')
+    if type == "v" && a:type != "v"
+        let append = matchstr(keeper,'\_s\@<!\s*$')
+        let keeper = substitute(keeper,'\_s\@<!\s*$','','')
     endif
     call setreg(reg,keeper,type)
     call s:wrapreg(reg,char,a:0)
@@ -718,6 +717,8 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
     if !hasmapto("<Plug>Isurround","i") && !mapcheck("<C-S>","i")
         imap     <C-S> <Plug>Isurround
     endif
+    imap        <C-G>s <Plug>Isurround
+    imap        <C-G>S <Plug>ISurround
     "Implemented internally instead
     "imap     <C-S><C-S> <Plug>ISurround
 endif
