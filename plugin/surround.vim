@@ -657,7 +657,7 @@ function! s:opfunc(type,...) " {{{1
     endif
     call setreg(reg,keeper,type)
     call s:wrapreg(reg,char,a:0)
-    if type == "v" && append != ""
+    if type == "v" && a:type != "v" && append != ""
         call setreg(reg,append,"ac")
     endif
     silent exe 'norm! gv'.(reg == '"' ? '' : '"' . reg).'p`['
