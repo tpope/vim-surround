@@ -1,0 +1,183 @@
+*surround.txt*  Plugin for deleting, changing, and adding "surroundings"
+
+Author:  Tim Pope <vimNOSPAM@tpope.info>        *surround-author*
+License: Same terms as Vim itself (see |license|)
+
+This plugin is only available if 'compatible' is not set.
+
+INTRODUCTION                                    *surround*
+
+This plugin is a tool for dealing with pairs of "surroundings."  Examples
+of surroundings include parentheses, quotes, and HTML tags.  They are
+closely related to what Vim refers to as |text-objects|.  Provided
+are mappings to allow for removing, changing, and adding surroundings.
+
+Details follow on the exact semantics, but first, consider the following
+examples.  An asterisk (*) is used to denote the cursor position.
+
+  Old text                  Command     New text ~
+  "Hello *world!"           ds"         Hello world!
+  [123+4*56]/2              cs])        (123+456)/2
+  "Look ma, I'm *HTML!"     cs"<q>      <q>Look ma, I'm HTML!</q>
+  if *x>3 {                 ysW(        if ( x>3 ) {
+  my $str = *whee!;         vlllls'     my $str = 'whee!';
+
+While a few features of this plugin will work in older versions of Vim,
+Vim 7 is recommended for full functionality.
+
+MAPPINGS                                        *surround-mappings*
+
+Delete surroundings is *ds*.  The next character given determines the target
+to delete.  The exact nature of the target are explained in
+|surround-targets| but essentially it is the last character of a
+|text-object|.  This mapping deletes the difference between the "inner"
+object and "an" object.  This is easiest to understand with some examples:
+
+  Old text                  Command     New text ~
+  "Hello *world!"           ds"         Hello world!
+  (123+4*56)/2              ds)         123+456/2
+  <div>Yo!*</div>           dst         Yo!
+
+Change surroundings is *cs*.  It takes two arguments, a target like with
+|ds|, and a replacement.  Details about the second argument can be found
+below in |surround-replacements|.  Once again, examples are in order.
+
+  Old text                  Command     New text ~
+  "Hello *world!"           cs"'        'Hello world!'
+  "Hello *world!"           cs"<q>      <q>Hello world!</q>
+  (123+4*56)/2              cs)]        [123+456]/2
+  (123+4*56)/2              cs)[        [ 123+456 ]/2
+  <div>Yo!*</div>           cst<p>      <p>Yo!</p>
+
+*ys* takes an valid Vim motion or text object as the first object, and wraps
+it using the second argument as with |cs|.  (Unfortunately there's no good
+mnemonic for "ys").
+
+  Old text                  Command     New text ~
+  Hello w*orld!             ysiw)       Hello (world)!
+
+As a special case, *yss* operates on the current line, ignoring leading
+whitespace.
+
+  Old text                  Command     New text ~
+      Hello w*orld!         yssB            {Hello world!}
+
+There is also *yS* and *ySS* which indent the surrounded text and place it
+on a line of its own.
+
+In visual mode, a simple "s" with an argument wraps the selection.  This is
+referred to as the *vs* mapping, although ordinarily there will be
+additional keystrokes between the v and s.  In linewise visual mode, the
+surroundings are placed on separate lines.  In blockwise visual mode, each
+line is surrounded.
+
+An "S" in visual mode (*vS*) behaves similarly but always places the
+surroundings on separate lines.  Additionally, the surrounded text is
+indented.  In blockwise visual mode, using "S" instead of "s" instead skips
+trailing whitespace.
+
+Note that "s" and "S" already have valid meaning in visual mode, but it is
+identical to "c".  If you have muscle memory for "s" and would like to use a
+different key, add your own mapping and the existing one will be disabled.
+>
+  vmap <Leader>s <Plug>Vsurround
+  vmap <Leader>S <Plug>VSurround
+<
+                                                *i_CTRL-G_s* *i_CTRL-G_S*
+Finally, there is an experimental insert mode mapping on <C-G>s and <C-S>.
+Beware that the latter won't work on terminals with flow control (if you
+accidentally freeze your terminal, use <C-Q> to unfreeze it).  The mapping
+inserts the specified surroundings and puts the cursor between them.  If,
+immediately after the mapping and before the replacement, a second <C-S> or
+carriage return is pressed, the prefix, cursor, and suffix will be placed on
+three separate lines.  <C-G>S (not <C-G>s) also exhibits this behavior.
+
+TARGETS                                         *surround-targets*
+
+The |ds| and |cs| commands both take a target as their first argument.  The
+possible targets are based closely on the |text-objects| provided by Vim.
+In order for a target to work, the corresponding text object must be
+supported in the version of Vim used (Vim 7 adds several text objects, and
+thus is highly recommended).  All targets are currently just one character.
+
+Eight punctuation marks, (, ), {, }, [, ], <, and >, represent themselves
+and their counterpart.  If the opening mark is used, contained whitespace is
+also trimmed.  The targets b, B, r, and a are aliases for ), }, ], and >
+(the first two mirror Vim; the second two are completely arbitrary and
+subject to change).
+
+Three quote marks, ', ", `, represent themselves, in pairs.  They are only
+searched for on the current line.
+
+A t is a pair of HTML or XML tags.  See |tag-blocks| for details.  Remember
+that you can specify a numerical argument if you want to get to a tag other
+than the innermost one.
+
+The letters w, W, and s correspond to a |word|, a |WORD|, and a |sentence|,
+respectively.  These are special in that they have nothing do delete, and
+used with |ds| they are a no-op.  With |cs|, one could consider them a
+slight shortcut for ysi (cswb == ysiwb, more or less).
+
+A p represents a |paragraph|.  This behaves similarly to w, W, and s above;
+however, newlines are sometimes added and/or removed.
+
+REPLACEMENTS                                    *surround-replacements*
+
+A replacement argument is a single character, and is required by |cs|, |ys|,
+and |vs|.  Undefined replacement characters (with the exception of
+alphabetic characters) default to placing themselves at the beginning and
+end of the destination, which can be useful for characters like / and |.
+
+If either ), }, ], or > is used, the text is wrapped in the appropriate
+pair of characters.  Similar behavior can be found with (, {, and [ (but not
+<), which append an additional space to the inside.  Like with the targets
+above, b, B, r, and a are aliases for ), }, ], and >.
+
+If t or < is used, Vim prompts for an HTML/XML tag to insert.  You may
+specify attributes here and they will be stripped from the closing tag.
+End your input by pressing <CR> or >.  As an experimental feature, if <C-T>
+is used, the tags will appear on lines by themselves.
+
+An experimental replacement of a LaTeX environment is provided on \ and l.
+The name of the environment and any arguments will be input from a prompt.
+The following shows the resulting environment from csp\tabular}{lc<CR>
+>
+  \begin{tabular}{lc}
+  \end{tabular}
+<
+CUSTOMIZING                                     *surround-customizing*
+
+The following adds a potential replacement on "-" (ASCII 45) in PHP files.
+(To determine the ASCII code to use, :echo char2nr("-")).  The carriage
+return will be replaced by the original text.
+>
+  autocmd FileType php let b:surround_45 = "<?php \r ?>"
+<
+This can be used in a PHP file as in the following example.
+
+  Old text                  Command     New text ~
+  print "Hello *world!"     yss-        <?php print "Hello world!" ?>
+
+Additionally, one can use a global variable for globally available
+replacements.
+>
+  let g:surround_45 = "<% \r %>"
+  let g:surround_61 = "<%= \r %>"
+<
+ISSUES                                          *surround-issues*
+
+Vim could potentially get confused when deleting/changing occurs at the very
+end of the line.  Please report any repeatable instances of this.
+
+Do we need to use |inputsave()|/|inputrestore()| with the tag replacement?
+
+Customization isn't very flexible.  Need a system that allows for prompting,
+like with HTML tags and LaTeX environments.
+
+Indenting is handled haphazardly.  Need to decide the most appropriate
+behavior and implement it.  Right now one can do :let b:surround_indent = 1
+(or the global equivalent) to enable automatic re-indenting by Vim via |=|;
+should this be the default?
+
+It would be nice if |.| would work to repeat an operation.
+ vim:tw=78:ts=8:ft=help:norl:
