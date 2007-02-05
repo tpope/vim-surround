@@ -111,6 +111,47 @@ function! s:fixindent(str,spc)
     return str
 endfunction
 
+function! s:process(string)
+    let i = 0
+    while i < 7
+        let i = i + 1
+        let repl_{i} = ''
+        let m = matchstr(a:string,nr2char(i).'.\{-\}\ze'.nr2char(i))
+        if m != ''
+            let m = substitute(strpart(m,1),'\r.*','','')
+            let repl_{i} = input(substitute(m,':\s*$','','').': ')
+        endif
+    endwhile
+    let s = ""
+    let i = 0
+    while i < strlen(a:string)
+        let char = strpart(a:string,i,1)
+        if char2nr(char) < 8
+            let next = stridx(a:string,char,i+1)
+            if next == -1
+                let s = s . char
+            else
+                let insertion = repl_{char2nr(char)}
+                let subs = strpart(a:string,i+1,next-i-1)
+                let subs = matchstr(subs,'\r.*')
+                echo substitute(subs,'\r','R','g')
+                while subs =~ '^\r.*\r'
+                    let sub = matchstr(subs,"^\r\\zs[^\r]*\r[^\r]*")
+                    let subs = strpart(subs,strlen(sub)+1)
+                    let r = stridx(sub,"\r")
+                    let insertion = substitute(insertion,strpart(sub,0,r),strpart(sub,r+1),'')
+                endwhile
+                let s = s . insertion
+                let i = next
+            endif
+        else
+            let s = s . char
+        endif
+        let i = i + 1
+    endwhile
+    return s
+endfunction
+
 function! s:wrap(string,char,type,...)
     let keeper = a:string
     let newchar = a:char
@@ -133,11 +174,13 @@ function! s:wrap(string,char,type,...)
     endif
     let idx = stridx(pairs,newchar)
     if exists("b:surround_".char2nr(newchar))
-        let before = s:extractbefore(b:surround_{char2nr(newchar)})
-        let after  =  s:extractafter(b:surround_{char2nr(newchar)})
+        let all    = s:process(b:surround_{char2nr(newchar)})
+        let before = s:extractbefore(all)
+        let after  =  s:extractafter(all)
     elseif exists("g:surround_".char2nr(newchar))
-        let before = s:extractbefore(g:surround_{char2nr(newchar)})
-        let after  =  s:extractafter(g:surround_{char2nr(newchar)})
+        let all    = s:process(g:surround_{char2nr(newchar)})
+        let before = s:extractbefore(all)
+        let after  =  s:extractafter(all)
     elseif newchar ==# "p"
         let before = "\n"
         let after  = "\n\n"
@@ -427,6 +470,7 @@ function! s:opfunc(type,...) " {{{1
     let &selection = "inclusive"
     let reg_save = getreg(reg)
     let reg_type = getregtype(reg)
+    "call setreg(reg,"\n","c")
     let type = a:type
     if a:type == "char"
         silent exe 'norm! v`[o`]"'.reg."y"
@@ -437,7 +481,12 @@ function! s:opfunc(type,...) " {{{1
     elseif a:type ==# "v" || a:type ==# "V" || a:type ==# "\<C-V>"
         silent exe 'norm! gv"'.reg."y"
     elseif a:type =~ '^\d\+$'
+        let type = 'v'
         silent exe 'norm! ^v'.a:type.'$h"'.reg.'y'
+        if mode() == 'v'
+            norm! v
+            return s:beep()
+        endif
     else
         let &selection = sel_save
         return s:beep()
