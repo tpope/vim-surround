@@ -335,10 +335,10 @@ function! s:insert(...) " {{{1
     "if linemode
         "call setreg('"',substitute(getreg('"'),'^\s\+','',''),'c')
     "endif
-    if col('.') > col('$')
-        norm! p`]
+    if col('.') >= col('$')
+        norm! ""p`]
     else
-        norm! P`]
+        norm! ""P`]
     endif
     call search('\r','bW')
     let @@ = reg_save
@@ -380,7 +380,7 @@ function! s:dosurround(...) " {{{1
     let original = getreg('"')
     let otype = getregtype('"')
     call setreg('"',"")
-    exe "norm d".(scount==1 ? "": scount)."i".char
+    exe 'norm d'.(scount==1 ? "": scount)."i".char
     "exe "norm vi".char."d"
     let keeper = getreg('"')
     let okeeper = keeper " for reindent below
@@ -436,7 +436,7 @@ function! s:dosurround(...) " {{{1
     if newchar != ""
         call s:wrapreg('"',newchar)
     endif
-    silent exe "norm! ".pcmd.'`['
+    silent exe 'norm! ""'.pcmd.'`['
     if removed =~ '\n' || okeeper =~ '\n' || getreg('"') =~ '\n'
         call s:reindent()
     else
@@ -465,21 +465,27 @@ function! s:opfunc(type,...) " {{{1
     if char == ""
         return s:beep()
     endif
-    let reg = '"'
+    if &cb =~ 'unnamed'
+        let reg = 's'
+    else
+        let reg = '"'
+    endif
     let sel_save = &selection
     let &selection = "inclusive"
     let reg_save = getreg(reg)
     let reg_type = getregtype(reg)
+    let def_save = getreg('"')
+    let def_type = getregtype('"')
     "call setreg(reg,"\n","c")
     let type = a:type
     if a:type == "char"
-        silent exe 'norm! v`[o`]"'.reg."y"
+        silent exe 'norm! v`[o`]"'.reg.'y'
         let type = 'v'
     elseif a:type == "line"
-        silent exe 'norm! `[V`]"'.reg."y"
+        silent exe 'norm! `[V`]"'.reg.'y'
         let type = 'V'
     elseif a:type ==# "v" || a:type ==# "V" || a:type ==# "\<C-V>"
-        silent exe 'norm! gv"'.reg."y"
+        silent exe 'norm! gv"'.reg.'y'
     elseif a:type =~ '^\d\+$'
         let type = 'v'
         silent exe 'norm! ^v'.a:type.'$h"'.reg.'y'
@@ -506,6 +512,7 @@ function! s:opfunc(type,...) " {{{1
         call s:reindent()
     endif
     call setreg(reg,reg_save,reg_type)
+    call setreg('"',def_save,def_type)
     let &selection = sel_save
 endfunction
 
