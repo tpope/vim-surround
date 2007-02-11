@@ -329,6 +329,7 @@ function! s:insert(...) " {{{1
         return ""
     endif
     "call inputsave()
+    let cb_save = &clipboard
     let reg_save = @@
     call setreg('"',"\r",'v')
     call s:wrapreg('"',char,linemode)
@@ -342,6 +343,7 @@ function! s:insert(...) " {{{1
     endif
     call search('\r','bW')
     let @@ = reg_save
+    let &clipboard = cb_save
     return "\<Del>"
 endfunction " }}}1
 
@@ -376,6 +378,8 @@ function! s:dosurround(...) " {{{1
             return s:beep()
         endif
     endif
+    let cb_save = &clipboard
+    set clipboard-=unnamed
     let append = ""
     let original = getreg('"')
     let otype = getregtype('"')
@@ -386,6 +390,7 @@ function! s:dosurround(...) " {{{1
     let okeeper = keeper " for reindent below
     if keeper == ""
         call setreg('"',original,otype)
+        let &clipboard = cb_save
         return ""
     endif
     let oldline = getline('.')
@@ -446,6 +451,7 @@ function! s:dosurround(...) " {{{1
     endif
     call setreg('"',removed,regtype)
     let s:lastdel = removed
+    let &clipboard = cb_save
 endfunction " }}}1
 
 function! s:changesurround() " {{{1
@@ -465,17 +471,13 @@ function! s:opfunc(type,...) " {{{1
     if char == ""
         return s:beep()
     endif
-    if &cb =~ 'unnamed'
-        let reg = 's'
-    else
-        let reg = '"'
-    endif
+    let reg = '"'
     let sel_save = &selection
     let &selection = "inclusive"
+    let cb_save  = &clipboard
+    set clipboard-=unnamed
     let reg_save = getreg(reg)
     let reg_type = getregtype(reg)
-    let def_save = getreg('"')
-    let def_type = getregtype('"')
     "call setreg(reg,"\n","c")
     let type = a:type
     if a:type == "char"
@@ -495,6 +497,7 @@ function! s:opfunc(type,...) " {{{1
         endif
     else
         let &selection = sel_save
+        let &clipboard = cb_save
         return s:beep()
     endif
     let keeper = getreg(reg)
@@ -512,8 +515,8 @@ function! s:opfunc(type,...) " {{{1
         call s:reindent()
     endif
     call setreg(reg,reg_save,reg_type)
-    call setreg('"',def_save,def_type)
     let &selection = sel_save
+    let &clipboard = cb_save
 endfunction
 
 function! s:opfunc2(arg)
