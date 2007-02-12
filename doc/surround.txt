@@ -186,6 +186,12 @@ This will remove anything after the first } in the input when the text is
 placed within the \end{} slot.  The first \r marks where the pattern begins,
 and the second where the replacement text begins.
 
+Here's a second example for creating an HTML <div>.  The substitution cleverly
+prompts for an id, but only adds id="" if it is non-blank.  You may have to
+read this one a few times slowly before you understand it.
+>
+  let g:surround_{char2nr("d")} = "<div\1id: \r..*\r id=\"&\"\1>\r</div>"
+<
 Inputting text replacements is a proof of concept at this point. The ugly,
 unintuitive interface and the brevity of the documentation reflect this.
 
