@@ -195,6 +195,12 @@ read this one a few times slowly before you understand it.
 Inputting text replacements is a proof of concept at this point. The ugly,
 unintuitive interface and the brevity of the documentation reflect this.
 
+Finally, It is possible to always append a string to surroundings in insert
+mode (and only insert mode).  This is useful with certain plugins and mappings
+that allow you to jump to such markings.
+>
+  let g:surround_insert_tail = "<++>"
+<
 ISSUES                                          *surround-issues*
 
 Vim could potentially get confused when deleting/changing occurs at the very
