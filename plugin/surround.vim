@@ -134,7 +134,6 @@ function! s:process(string)
                 let insertion = repl_{char2nr(char)}
                 let subs = strpart(a:string,i+1,next-i-1)
                 let subs = matchstr(subs,'\r.*')
-                echo substitute(subs,'\r','R','g')
                 while subs =~ '^\r.*\r'
                     let sub = matchstr(subs,"^\r\\zs[^\r]*\r[^\r]*")
                     let subs = strpart(subs,strlen(sub)+1)
@@ -185,17 +184,23 @@ function! s:wrap(string,char,type,...)
         let before = "\n"
         let after  = "\n\n"
     elseif newchar =~# "[tT\<C-T><,]"
-        "let dounmapr = 0
+        let dounmapp = 0
         let dounmapb = 0
-        "if !mapcheck("<CR>","c")
-            "let dounmapr = 1
-            "cnoremap <CR> ><CR>
-        "endif
-        if !mapcheck(">","c")
+        if !maparg(">","c")
             let dounmapb= 1
-            cnoremap > ><CR>
+            " Hide from AsNeeded
+            exe "cn"."oremap > <CR>"
+            exe "cn"."oremap % %<C-V>"
+            "cm ap > <C-R>=getcmdline() =~ '^[^%?].*[%?]$' ? "\026\076" : "\026\076\015"<CR>
         endif
         let default = ""
+        if !maparg("%","c")
+            " This is to help when typing things like
+            " <a href="/images/<%= @image.filename %>">
+            " The downside is it breaks backspace, so lets disable it for now
+            "let dounmapp= 1
+            "exe "cn"."oremap % %<C-V>"
+        endif
         if newchar ==# "T"
             if !exists("s:lastdel")
                 let s:lastdel = ""
@@ -210,10 +215,17 @@ function! s:wrap(string,char,type,...)
         if dounmapb
             silent! cunmap >
         endif
+        if dounmapp
+            silent! cunmap %
+        endif
         if tag != ""
             let tag = substitute(tag,'>*$','','')
-            let before = "<".tag.">"
-            let after  = "</".substitute(tag," .*",'','').">"
+            let before = '<'.tag.'>'
+            if tag =~ '/$'
+                let after = ''
+            else
+                let after  = '</'.substitute(tag,' .*','','').'>'
+            endif
             if newchar == "\<C-T>" || newchar == ","
                 if type ==# "v" || type ==# "V"
                     let before = before . "\n\t"
@@ -254,6 +266,9 @@ function! s:wrap(string,char,type,...)
         let idx = idx / 3 * 3
         let before = strpart(pairs,idx+1,1) . spc
         let after  = spc . strpart(pairs,idx+2,1)
+    elseif newchar == "\<C-[>" || newchar == "\<C-]>"
+        let before = "{\n\t"
+        let after  = "\n}"
     elseif newchar !~ '\a'
         let before = newchar
         let after  = newchar
@@ -272,6 +287,8 @@ function! s:wrap(string,char,type,...)
         endif
         if keeper !~ '\n$' && after !~ '^\n'
             let keeper = keeper . "\n"
+        elseif keeper =~ '\n$' && after =~ '^\n'
+            let after = strpart(after,1)
         endif
         if before !~ '\n\s*$'
             let before = before . "\n"
@@ -341,10 +358,14 @@ function! s:insert(...) " {{{1
         "call setreg('"',substitute(getreg('"'),'^\s\+','',''),'c')
     "endif
     if col('.') >= col('$')
-        norm! ""p`]
+        norm! ""p
     else
-        norm! ""P`]
+        norm! ""P
     endif
+    if @@ =~ '\r.*\n'
+        call s:reindent()
+    endif
+    norm! `]
     call search('\r','bW')
     let @@ = reg_save
     let &clipboard = cb_save
@@ -352,7 +373,7 @@ function! s:insert(...) " {{{1
 endfunction " }}}1
 
 function! s:reindent() " {{{1
-    if (exists("b:surround_indent") || exists("g:surround_indent"))
+    if exists("b:surround_indent") ? b:surround_indent : (exists("g:surround_indent") && g:surround_indent)
         silent norm! '[=']
     endif
 endfunction " }}}1
@@ -565,19 +586,19 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
     nmap          ySS  <Plug>YSsurround
     if !hasmapto("<Plug>Vsurround","v")
         if exists(":xmap")
-            xmap      s    <Plug>Vsurround
+            xmap  s    <Plug>Vsurround
         else
-            vmap      s    <Plug>Vsurround
+            vmap  s    <Plug>Vsurround
         endif
     endif
     if !hasmapto("<Plug>VSurround","v")
         if exists(":xmap")
-            xmap      S    <Plug>VSurround
+            xmap  S    <Plug>VSurround
         else
-            vmap      S    <Plug>VSurround
+            vmap  S    <Plug>VSurround
         endif
     endif
-    if !hasmapto("<Plug>Isurround","i") && !mapcheck("<C-S>","i")
+    if !hasmapto("<Plug>Isurround","i") && "" == mapcheck("<C-S>","i")
         imap     <C-S> <Plug>Isurround
     endif
     imap        <C-G>s <Plug>Isurround
