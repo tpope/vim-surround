@@ -27,11 +27,11 @@ Vim 7 is recommended for full functionality.
 
 MAPPINGS                                        *surround-mappings*
 
-Delete surroundings is *ds*.  The next character given determines the target
-to delete.  The exact nature of the target are explained in
-|surround-targets| but essentially it is the last character of a
-|text-object|.  This mapping deletes the difference between the "inner"
-object and "an" object.  This is easiest to understand with some examples:
+Delete surroundings is *ds* .  The next character given determines the target
+to delete.  The exact nature of the target are explained in |surround-targets|
+but essentially it is the last character of a |text-object|.  This mapping
+deletes the difference between the "inner" object and "an" object.  This is
+easiest to understand with some examples:
 
   Old text                  Command     New text ~
   "Hello *world!"           ds"         Hello world!
@@ -51,7 +51,7 @@ below in |surround-replacements|.  Once again, examples are in order.
 
 *ys* takes an valid Vim motion or text object as the first object, and wraps
 it using the second argument as with |cs|.  (Unfortunately there's no good
-mnemonic for "ys").
+mnemonic for "ys".)
 
   Old text                  Command     New text ~
   Hello w*orld!             ysiw)       Hello (world)!
@@ -114,7 +114,7 @@ that you can specify a numerical argument if you want to get to a tag other
 than the innermost one.
 
 The letters w, W, and s correspond to a |word|, a |WORD|, and a |sentence|,
-respectively.  These are special in that they have nothing do delete, and
+respectively.  These are special in that they have nothing to delete, and
 used with |ds| they are a no-op.  With |cs|, one could consider them a
 slight shortcut for ysi (cswb == ysiwb, more or less).
 
@@ -124,23 +124,25 @@ however, newlines are sometimes added and/or removed.
 REPLACEMENTS                                    *surround-replacements*
 
 A replacement argument is a single character, and is required by |cs|, |ys|,
-and |vs|.  Undefined replacement characters (with the exception of
-alphabetic characters) default to placing themselves at the beginning and
-end of the destination, which can be useful for characters like / and |.
+and |vs|.  Undefined replacement characters (with the exception of alphabetic
+characters) default to placing themselves at the beginning and end of the
+destination, which can be useful for characters like / and |.
 
-If either ), }, ], or > is used, the text is wrapped in the appropriate
-pair of characters.  Similar behavior can be found with (, {, and [ (but not
-<), which append an additional space to the inside.  Like with the targets
-above, b, B, r, and a are aliases for ), }, ], and >.
+If either ), }, ], or > is used, the text is wrapped in the appropriate pair
+of characters.  Similar behavior can be found with (, {, and [ (but not <),
+which append an additional space to the inside.  Like with the targets above,
+b, B, r, and a are aliases for ), }, ], and >.  To fulfill the common need for
+code blocks in C-style languages, <C-}> (which is really <C-]>) adds braces on
+lines separate from the content.
 
-If t or < is used, Vim prompts for an HTML/XML tag to insert.  You may
-specify attributes here and they will be stripped from the closing tag.
-End your input by pressing <CR> or >.  As an experimental feature, if <C-T>
-is used, the tags will appear on lines by themselves.
+If t or < is used, Vim prompts for an HTML/XML tag to insert.  You may specify
+attributes here and they will be stripped from the closing tag.  End your
+input by pressing <CR> or >.  If <C-T> is used, the tags will appear on lines
+by themselves.
 
-A deprecated replacement of a LaTeX environment is provided on \ and l.
-The name of the environment and any arguments will be input from a prompt.
-This will be removed once a more fully functional customization system is
+A deprecated replacement of a LaTeX environment is provided on \ and l.  The
+name of the environment and any arguments will be input from a prompt.  This
+will be removed once a more fully functional customization system is
 implemented.  The following shows the resulting environment from
 csp\tabular}{lc<CR>
 >
