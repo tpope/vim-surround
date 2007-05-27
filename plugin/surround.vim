@@ -172,7 +172,10 @@ function! s:wrap(string,char,type,...)
         let extraspace = ' '
     endif
     let idx = stridx(pairs,newchar)
-    if exists("b:surround_".char2nr(newchar))
+    if newchar == ' '
+        let before = ''
+        let after  = ''
+    elseif exists("b:surround_".char2nr(newchar))
         let all    = s:process(b:surround_{char2nr(newchar)})
         let before = s:extractbefore(all)
         let after  =  s:extractafter(all)
@@ -409,7 +412,12 @@ function! s:dosurround(...) " {{{1
     let original = getreg('"')
     let otype = getregtype('"')
     call setreg('"',"")
-    exe 'norm d'.(scount==1 ? "": scount)."i".char
+    let strcount = (scount == 1 ? "" : scount)
+    if char == '/'
+        exe 'norm '.strcount.'[/d'.strcount.']/'
+    else
+        exe 'norm d'.strcount.'i'.char
+    endif
     "exe "norm vi".char."d"
     let keeper = getreg('"')
     let okeeper = keeper " for reindent below
@@ -430,6 +438,10 @@ function! s:dosurround(...) " {{{1
     elseif char =~ "[\"'`]"
         exe "norm! i \<Esc>d2i".char
         call setreg('"',substitute(getreg('"'),' ','',''))
+    elseif char == '/'
+        norm! "_x
+        call setreg('"','/**/',"c")
+        let keeper = substitute(substitute(keeper,'^/\*\s\=','',''),'\s\=\*$','','')
     else
         exe "norm! da".char
     endif
