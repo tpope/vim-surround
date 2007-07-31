@@ -353,6 +353,13 @@ function! s:insert(...) " {{{1
     let reg_save = @@
     call setreg('"',"\r",'v')
     call s:wrapreg('"',char,linemode)
+    " If line mode is used and the surrounding consists solely of a suffix,
+    " remove the initial newline.  This fits a use case of mine but is a
+    " little inconsistent.  Is there anyone that would prefer the simpler
+    " behavior of just inserting the newline?
+    if linemode && matchstr(getreg('"'),'^\n\s*\zs.*') == 0
+        call setreg('"',matchstr(getreg('"'),'^\n\s*\zs.*'),getregtype('"'))
+    endif
     " This can be used to append a placeholder to the end
     if exists("g:surround_insert_tail")
         call setreg('"',g:surround_insert_tail,"a".getregtype('"'))
@@ -365,7 +372,7 @@ function! s:insert(...) " {{{1
     else
         norm! ""P
     endif
-    if @@ =~ '\r.*\n'
+    if linemode
         call s:reindent()
     endif
     norm! `]
