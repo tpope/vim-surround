@@ -357,7 +357,7 @@ function! s:insert(...) " {{{1
     " remove the initial newline.  This fits a use case of mine but is a
     " little inconsistent.  Is there anyone that would prefer the simpler
     " behavior of just inserting the newline?
-    if linemode && matchstr(getreg('"'),'^\n\s*\zs.*') == 0
+    if linemode && match(getreg('"'),'^\n\s*\zs.*') == 0
         call setreg('"',matchstr(getreg('"'),'^\n\s*\zs.*'),getregtype('"'))
     endif
     " This can be used to append a placeholder to the end
