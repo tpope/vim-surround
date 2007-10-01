@@ -38,7 +38,7 @@ easiest to understand with some examples:
   (123+4*56)/2              ds)         123+456/2
   <div>Yo!*</div>           dst         Yo!
 
-Change surroundings is *cs*.  It takes two arguments, a target like with
+Change surroundings is *cs* .  It takes two arguments, a target like with
 |ds|, and a replacement.  Details about the second argument can be found
 below in |surround-replacements|.  Once again, examples are in order.
 
