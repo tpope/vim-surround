@@ -496,6 +496,11 @@ function! s:dosurround(...) " {{{1
     call setreg('"',removed,regtype)
     let s:lastdel = removed
     let &clipboard = cb_save
+    if newchar == ""
+        silent! call dot#set("\<Plug>Dsurround".char,scount)
+    else
+        silent! call dot#set("\<Plug>Csurround".char.newchar,scount)
+    endif
 endfunction " }}}1
 
 function! s:changesurround() " {{{1
@@ -561,6 +566,9 @@ function! s:opfunc(type,...) " {{{1
     call setreg(reg,reg_save,reg_type)
     let &selection = sel_save
     let &clipboard = cb_save
+    if a:type =~ '^\d\+$'
+        silent! call dot#set("\<Plug>Y".(a:0 ? "S" : "s")."surround".char,a:type)
+    endif
 endfunction
 
 function! s:opfunc2(arg)
