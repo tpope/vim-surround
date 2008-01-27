@@ -13,7 +13,7 @@
 " ============================================================================
 
 " Exit quickly when:
-" - this plugin was already loaded (or disabled)
+" - this plugin was already loaded or disabled
 " - when 'compatible' is set
 if (exists("g:loaded_surround") && g:loaded_surround) || &cp
     finish
@@ -334,6 +334,14 @@ function! s:wrapreg(reg,char,...)
 endfunction
 " }}}1
 
+function! s:dotset(seq,count)
+    " hedging bets on the name of a future plugin
+    silent! call repeat#set(a:seq,a:count)
+    if !exists("*repeat#set")
+        silent! call dot#set(a:seq,a:count)
+    endif
+endfunction
+
 function! s:insert(...) " {{{1
     " Optional argument causes the result to appear on 3 lines, not 1
     "call inputsave()
@@ -486,9 +494,9 @@ function! s:dosurround(...) " {{{1
     let s:lastdel = removed
     let &clipboard = cb_save
     if newchar == ""
-        silent! call dot#set("\<Plug>Dsurround".char,scount)
+        call s:dotset("\<Plug>Dsurround".char,scount)
     else
-        silent! call dot#set("\<Plug>Csurround".char.newchar,scount)
+        call s:dotset("\<Plug>Csurround".char.newchar,scount)
     endif
 endfunction " }}}1
 
@@ -556,7 +564,7 @@ function! s:opfunc(type,...) " {{{1
     let &selection = sel_save
     let &clipboard = cb_save
     if a:type =~ '^\d\+$'
-        silent! call dot#set("\<Plug>Y".(a:0 ? "S" : "s")."surround".char,a:type)
+        call s:dotset("\<Plug>Y".(a:0 ? "S" : "s")."surround".char,a:type)
     endif
 endfunction
 
