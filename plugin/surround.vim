@@ -334,14 +334,6 @@ function! s:wrapreg(reg,char,...)
 endfunction
 " }}}1
 
-function! s:dotset(seq,count)
-    " hedging bets on the name of a future plugin
-    silent! call repeat#set(a:seq,a:count)
-    if !exists("*repeat#set")
-        silent! call dot#set(a:seq,a:count)
-    endif
-endfunction
-
 function! s:insert(...) " {{{1
     " Optional argument causes the result to appear on 3 lines, not 1
     "call inputsave()
@@ -494,9 +486,9 @@ function! s:dosurround(...) " {{{1
     let s:lastdel = removed
     let &clipboard = cb_save
     if newchar == ""
-        call s:dotset("\<Plug>Dsurround".char,scount)
+        silent! call repeat#set("\<Plug>Dsurround".char,scount)
     else
-        call s:dotset("\<Plug>Csurround".char.newchar,scount)
+        silent! call repeat#set("\<Plug>Csurround".char.newchar,scount)
     endif
 endfunction " }}}1
 
@@ -564,7 +556,7 @@ function! s:opfunc(type,...) " {{{1
     let &selection = sel_save
     let &clipboard = cb_save
     if a:type =~ '^\d\+$'
-        call s:dotset("\<Plug>Y".(a:0 ? "S" : "s")."surround".char,a:type)
+        silent! call repeat#set("\<Plug>Y".(a:0 ? "S" : "s")."surround".char,a:type)
     endif
 endfunction
 
