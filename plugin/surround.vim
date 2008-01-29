@@ -450,7 +450,7 @@ function! s:dosurround(...) " {{{1
         " Do nothing
         call setreg('"','')
     elseif char =~ "[\"'`]"
-        exe "norm! i \<Esc>d2i".char
+        exe "norm! a \<Esc>d2i".char
         call setreg('"',substitute(getreg('"'),' ','',''))
     elseif char == '/'
         norm! "_x
