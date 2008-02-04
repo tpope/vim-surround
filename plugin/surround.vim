@@ -425,7 +425,9 @@ function! s:dosurround(...) " {{{1
     else
         exe 'norm d'.strcount.'i'.char
         " One character backwards
-        call search('.','bW')
+        if getreg('"') != ""
+            call search('.','bW')
+        endif
     endif
     let keeper = getreg('"')
     let okeeper = keeper " for reindent below
