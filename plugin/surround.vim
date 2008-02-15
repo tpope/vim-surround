@@ -424,10 +424,6 @@ function! s:dosurround(...) " {{{1
         exe 'norm '.strcount.'[/d'.strcount.']/'
     else
         exe 'norm d'.strcount.'i'.char
-        " One character backwards
-        if getreg('"') != ""
-            call search('.','bW')
-        endif
     endif
     let keeper = getreg('"')
     let okeeper = keeper " for reindent below
@@ -444,13 +440,15 @@ function! s:dosurround(...) " {{{1
         " Do nothing
         call setreg('"','')
     elseif char =~ "[\"'`]"
-        exe "norm! a \<Esc>d2i".char
+        exe "norm! i \<Esc>d2i".char
         call setreg('"',substitute(getreg('"'),' ','',''))
     elseif char == '/'
         norm! "_x
         call setreg('"','/**/',"c")
         let keeper = substitute(substitute(keeper,'^/\*\s\=','',''),'\s\=\*$','','')
     else
+        " One character backwards
+        call search('.','bW')
         exe "norm da".char
     endif
     let removed = getreg('"')
