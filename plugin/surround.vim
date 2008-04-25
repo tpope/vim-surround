@@ -159,7 +159,7 @@ function! s:wrap(string,char,type,...)
     let special = a:0 ? a:1 : 0
     let before = ""
     let after  = ""
-    if type == "V"
+    if type ==# "V"
         let initspaces = matchstr(keeper,'\%^\s*')
     else
         let initspaces = matchstr(getline('.'),'\%^\s*')
@@ -350,6 +350,7 @@ function! s:insert(...) " {{{1
     endif
     "call inputsave()
     let cb_save = &clipboard
+    set clipboard-=unnamed
     let reg_save = @@
     call setreg('"',"\r",'v')
     call s:wrapreg('"',char,linemode)
@@ -525,11 +526,14 @@ function! s:opfunc(type,...) " {{{1
         silent exe 'norm! `[V`]"'.reg.'y'
         let type = 'V'
     elseif a:type ==# "v" || a:type ==# "V" || a:type ==# "\<C-V>"
+        let ve = &virtualedit
+        set virtualedit=
         silent exe 'norm! gv"'.reg.'y'
+        let &virtualedit = ve
     elseif a:type =~ '^\d\+$'
         let type = 'v'
         silent exe 'norm! ^v'.a:type.'$h"'.reg.'y'
-        if mode() == 'v'
+        if mode() ==# 'v'
             norm! v
             return s:beep()
         endif
@@ -539,17 +543,17 @@ function! s:opfunc(type,...) " {{{1
         return s:beep()
     endif
     let keeper = getreg(reg)
-    if type == "v" && a:type != "v"
+    if type ==# "v" && a:type !=# "v"
         let append = matchstr(keeper,'\_s\@<!\s*$')
         let keeper = substitute(keeper,'\_s\@<!\s*$','','')
     endif
     call setreg(reg,keeper,type)
     call s:wrapreg(reg,char,a:0)
-    if type == "v" && a:type != "v" && append != ""
+    if type ==# "v" && a:type !=# "v" && append != ""
         call setreg(reg,append,"ac")
     endif
     silent exe 'norm! gv'.(reg == '"' ? '' : '"' . reg).'p`['
-    if type == 'V' || (getreg(reg) =~ '\n' && type == 'v')
+    if type ==# 'V' || (getreg(reg) =~ '\n' && type ==# 'v')
         call s:reindent()
     endif
     call setreg(reg,reg_save,reg_type)
