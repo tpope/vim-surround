@@ -28,9 +28,9 @@ Vim 7 is recommended for full functionality.
 MAPPINGS                                        *surround-mappings*
 
 Delete surroundings is *ds* .  The next character given determines the target
-to delete.  The exact nature of the target are explained in |surround-targets|
+to delete.  The exact nature of the target is explained in |surround-targets|
 but essentially it is the last character of a |text-object|.  This mapping
-deletes the difference between the "inner" object and "an" object.  This is
+deletes the difference between the "i"nner object and "a"n object.  This is
 easiest to understand with some examples:
 
   Old text                  Command     New text ~
@@ -49,7 +49,7 @@ below in |surround-replacements|.  Once again, examples are in order.
   (123+4*56)/2              cs)[        [ 123+456 ]/2
   <div>Yo!*</div>           cst<p>      <p>Yo!</p>
 
-*ys* takes an valid Vim motion or text object as the first object, and wraps
+*ys* takes a valid Vim motion or text object as the first object, and wraps
 it using the second argument as with |cs|.  (Unfortunately there's no good
 mnemonic for "ys".)
 
@@ -101,7 +101,7 @@ supported in the version of Vim used (Vim 7 adds several text objects, and
 thus is highly recommended).  All targets are currently just one character.
 
 Eight punctuation marks, (, ), {, }, [, ], <, and >, represent themselves
-and their counterpart.  If the opening mark is used, contained whitespace is
+and their counterparts.  If the opening mark is used, contained whitespace is
 also trimmed.  The targets b, B, r, and a are aliases for ), }, ], and >
 (the first two mirror Vim; the second two are completely arbitrary and
 subject to change).
