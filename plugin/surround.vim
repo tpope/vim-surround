@@ -193,17 +193,8 @@ function! s:wrap(string,char,type,...)
             let dounmapb= 1
             " Hide from AsNeeded
             exe "cn"."oremap > <CR>"
-            exe "cn"."oremap % %<C-V>"
-            "cm ap > <C-R>=getcmdline() =~ '^[^%?].*[%?]$' ? "\026\076" : "\026\076\015"<CR>
         endif
         let default = ""
-        if !maparg("%","c")
-            " This is to help when typing things like
-            " <a href="/images/<%= @image.filename %>">
-            " The downside is it breaks backspace, so lets disable it for now
-            "let dounmapp= 1
-            "exe "cn"."oremap % %<C-V>"
-        endif
         if newchar ==# "T"
             if !exists("s:lastdel")
                 let s:lastdel = ""
@@ -212,14 +203,8 @@ function! s:wrap(string,char,type,...)
         endif
         let tag = input("<",default)
         echo "<".substitute(tag,'>*$','>','')
-        "if dounmapr
-            "silent! cunmap <CR>
-        "endif
         if dounmapb
             silent! cunmap >
-        endif
-        if dounmapp
-            silent! cunmap %
         endif
         if tag != ""
             let tag = substitute(tag,'>*$','','')
