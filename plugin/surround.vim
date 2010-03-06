@@ -302,7 +302,7 @@ function! s:wrap(string,char,type,...)
     " Really we should be iterating over the buffer
     let repl = substitute(before,'[\\~]','\\&','g').'\1'.substitute(after,'[\\~]','\\&','g')
     let repl = substitute(repl,'\n',' ','g')
-    let keeper = substitute(keeper."\n",'\(.\{-\}\)\('.(special ? '\s\{-\}' : '').'\n\)',repl.'\n','g')
+    let keeper = substitute(keeper."\n",'\(.\{-\}\)\(\n\)',repl.'\n','g')
     let keeper = substitute(keeper,'\n\%$','','')
   else
     let keeper = before.extraspace.keeper.extraspace.after
@@ -512,7 +512,9 @@ function! s:opfunc(type,...) " {{{1
     let type = 'V'
   elseif a:type ==# "v" || a:type ==# "V" || a:type ==# "\<C-V>"
     let ve = &virtualedit
-    set virtualedit=
+    if !(a:0 && a:1)
+      set virtualedit=
+    endif
     silent exe 'norm! gv"'.reg.'y'
     let &virtualedit = ve
   elseif a:type =~ '^\d\+$'
@@ -533,7 +535,7 @@ function! s:opfunc(type,...) " {{{1
     let keeper = substitute(keeper,'\_s\@<!\s*$','','')
   endif
   call setreg(reg,keeper,type)
-  call s:wrapreg(reg,char,a:0)
+  call s:wrapreg(reg,char,a:0 && a:1)
   if type ==# "v" && a:type !=# "v" && append != ""
     call setreg(reg,append,"ac")
   endif
@@ -545,7 +547,7 @@ function! s:opfunc(type,...) " {{{1
   let &selection = sel_save
   let &clipboard = cb_save
   if a:type =~ '^\d\+$'
-    silent! call repeat#set("\<Plug>Y".(a:0 ? "S" : "s")."surround".char,a:type)
+    silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char,a:type)
   endif
 endfunction
 
@@ -577,7 +579,8 @@ nnoremap <silent> <Plug>YSsurround :<C-U>call <SID>opfunc2(v:count1)<CR>
 nnoremap <silent> <Plug>Ysurround  :<C-U>set opfunc=<SID>opfunc<CR>g@
 nnoremap <silent> <Plug>YSurround  :<C-U>set opfunc=<SID>opfunc2<CR>g@
 vnoremap <silent> <Plug>Vsurround  :<C-U>call <SID>opfunc(visualmode())<CR>
-vnoremap <silent> <Plug>VSurround  :<C-U>call <SID>opfunc2(visualmode())<CR>
+vnoremap <silent> <Plug>VSurround  :<C-U>call <SID>opfunc(visualmode(),visualmode() ==# 'V' ? 1 : 0)<CR>
+vnoremap <silent> <Plug>VgSurround :<C-U>call <SID>opfunc(visualmode(),visualmode() ==# 'V' ? 0 : 1)<CR>
 inoremap <silent> <Plug>Isurround  <C-R>=<SID>insert()<CR>
 inoremap <silent> <Plug>ISurround  <C-R>=<SID>insert(1)<CR>
 
@@ -589,7 +592,7 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
   nmap      yss  <Plug>Yssurround
   nmap      ySs  <Plug>YSsurround
   nmap      ySS  <Plug>YSsurround
-  if !hasmapto("<Plug>Vsurround","v")
+  if !hasmapto("<Plug>Vsurround","v") && !hasmapto("<Plug>VSurround","v")
     if exists(":xmap")
       xmap  s    <Plug>Vsurround
     else
@@ -603,6 +606,7 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
       vmap  S    <Plug>VSurround
     endif
   endif
+  vmap      gS   <Plug>VgSurround
   if !hasmapto("<Plug>Isurround","i") && "" == mapcheck("<C-S>","i")
     imap    <C-S> <Plug>Isurround
   endif

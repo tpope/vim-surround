@@ -66,22 +66,26 @@ There is also *yS* and *ySS* which indent the surrounded text and place it
 on a line of its own.
 
 In visual mode, a simple "s" with an argument wraps the selection.  This is
-referred to as the *vs* mapping, although ordinarily there will be
+referred to as the *vS* mapping, although ordinarily there will be
 additional keystrokes between the v and s.  In linewise visual mode, the
-surroundings are placed on separate lines.  In blockwise visual mode, each
-line is surrounded.
+surroundings are placed on separate lines and indented.  In blockwise visual
+mode, each line is surrounded.
 
-An "S" in visual mode (*vS*) behaves similarly but always places the
-surroundings on separate lines.  Additionally, the surrounded text is
-indented.  In blockwise visual mode, using "S" instead of "s" instead skips
-trailing whitespace.
+A "gS" in visual mode, known as *vgS* , behaves similarly.  In linewise visual
+mode, the automatic indenting is surpressed.  In blockwise visual mode, this
+enables surrounding past the end of the like with 'virtualedit' set (there
+seems to be no way in Vim Script to differentiate between a jagged end of line
+selection and a virtual block selected past the end of the line, so two maps
+were needed).
 
-Note that "s" and "S" already have valid meaning in visual mode, but it is
-identical to "c".  If you have muscle memory for "s" and would like to use a
-different key, add your own mapping and the existing one will be disabled.
+Additionally, there is a legacy "s" or *vs* mapping which is basically the
+same as |vS|.  Due to popular demand of wanting to use "s" as Vim does to mean
+replacing the selection (also available as "c"), this mapping is going away.
+If you were one of these people and would like to disable "s" with the current
+release, indicate this to surround.vim by assigning the "s" mapping to
+something else.
 >
-  vmap <Leader>s <Plug>Vsurround
-  vmap <Leader>S <Plug>VSurround
+  xmap <Leader>s <Plug>Vsurround
 <
                                                 *i_CTRL-G_s* *i_CTRL-G_S*
 Finally, there is an experimental insert mode mapping on <C-G>s and <C-S>.
