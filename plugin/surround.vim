@@ -1,7 +1,7 @@
 " surround.vim - Surroundings
 " Author:       Tim Pope <vimNOSPAM@tpope.org>
+" Version:      1.90
 " GetLatestVimScripts: 1697 1 :AutoInstall: surround.vim
-" $Id$
 "
 " See surround.txt for help.  This can be accessed by doing
 "
