@@ -1,5 +1,5 @@
 " surround.vim - Surroundings
-" Author:       Tim Pope <vimNOSPAM@tpope.info>
+" Author:       Tim Pope <vimNOSPAM@tpope.org>
 " GetLatestVimScripts: 1697 1 :AutoInstall: surround.vim
 " $Id$
 "
