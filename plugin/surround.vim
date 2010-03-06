@@ -606,7 +606,11 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
       vmap  S    <Plug>VSurround
     endif
   endif
-  vmap      gS   <Plug>VgSurround
+  if exists(":xmap")
+    xmap    gS   <Plug>VgSurround
+  else
+    vmap    gS   <Plug>VgSurround
+  endif
   if !hasmapto("<Plug>Isurround","i") && "" == mapcheck("<C-S>","i")
     imap    <C-S> <Plug>Isurround
   endif
