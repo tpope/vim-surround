@@ -50,8 +50,8 @@ below in |surround-replacements|.  Once again, examples are in order.
   <div>Yo!*</div>           cst<p>      <p>Yo!</p>
 
 *ys* takes a valid Vim motion or text object as the first object, and wraps
-it using the second argument as with |cs|.  (Unfortunately there's no good
-mnemonic for "ys".)
+it using the second argument as with |cs|.  (It's a stretch, but a good
+mnemonic for "ys" is "you surround".)
 
   Old text                  Command     New text ~
   Hello w*orld!             ysiw)       Hello (world)!
