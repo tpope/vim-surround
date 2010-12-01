@@ -106,7 +106,7 @@ thus is highly recommended).  All targets are currently just one character.
 
 Eight punctuation marks, (, ), {, }, [, ], <, and >, represent themselves
 and their counterparts.  If the opening mark is used, contained whitespace is
-also trimmed.  The targets b, B, r, and a are aliases for ), }, ], and >
+also trimmed.  The targets b, B, r, and a are aliases for ), }, ], and > 
 (the first two mirror Vim; the second two are completely arbitrary and
 subject to change).
 
