@@ -335,7 +335,7 @@ function! s:insert(...) " {{{1
   endif
   "call inputsave()
   let cb_save = &clipboard
-  set clipboard-=unnamed
+  set clipboard-=unnamed clipboard-=unnamedplus
   let reg_save = @@
   call setreg('"',"\r",'v')
   call s:wrapreg('"',char,linemode)
@@ -400,7 +400,7 @@ function! s:dosurround(...) " {{{1
     endif
   endif
   let cb_save = &clipboard
-  set clipboard-=unnamed
+  set clipboard-=unnamed clipboard-=unnamedplus
   let append = ""
   let original = getreg('"')
   let otype = getregtype('"')
@@ -499,7 +499,7 @@ function! s:opfunc(type,...) " {{{1
   let sel_save = &selection
   let &selection = "inclusive"
   let cb_save  = &clipboard
-  set clipboard-=unnamed
+  set clipboard-=unnamed clipboard-=unnamedplus
   let reg_save = getreg(reg)
   let reg_type = getregtype(reg)
   "call setreg(reg,"\n","c")
