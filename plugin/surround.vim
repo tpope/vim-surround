@@ -187,6 +187,7 @@ function! s:wrap(string,char,type,...)
     let before = "\n"
     let after  = "\n\n"
   elseif newchar =~# "[tT\<C-T><,]"
+    " Tags
     let dounmapp = 0
     let dounmapb = 0
     if !maparg(">","c")
@@ -223,6 +224,7 @@ function! s:wrap(string,char,type,...)
         endif
       endif
     endif
+    let s:tag = tag . '>'
   elseif newchar ==# 'l' || newchar == '\'
     " LaTeX
     let env = input('\begin{')
@@ -548,7 +550,7 @@ function! s:opfunc(type,...) " {{{1
   let &selection = sel_save
   let &clipboard = cb_save
   if a:type =~ '^\d\+$'
-    silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char,a:type)
+    silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char.s:tag,a:type)
   endif
 endfunction
 
