@@ -621,6 +621,30 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
   "imap      <C-S><C-S> <Plug>ISurround
 endif
 
+if !exists('g:surround_custom_mapping')
+    let g:surround_custom_mapping = {}
+endif
+
+function! s:surround_custom_map(scope) "{{{
+    if (a:scope != 'g') && empty(&ft)
+        return
+    endif
+    let map_dict =  a:scope == 'g' ? 'global' : &ft
+
+    if !has_key(g:surround_custom_mapping, map_dict)
+        return
+    end
+    for [key, action] in items(g:surround_custom_mapping[map_dict])
+        let command = "let ".a:scope.":surround_".char2nr(key)." = ".string(action)
+        execute command
+    endfor
+endfunction"}}}
+augroup Surround
+    autocmd!
+    autocmd VimEnter * call s:surround_custom_map('g')
+    autocmd FileType * call s:surround_custom_map('b')
+augroup END
+
 let &cpo = s:cpo_save
 
 " vim:set ft=vim sw=2 sts=2 et:
