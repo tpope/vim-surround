@@ -1,6 +1,6 @@
 *surround.txt*  Plugin for deleting, changing, and adding "surroundings"
 
-Author:  Tim Pope <vimNOSPAM@tpope.org>         *surround-author*
+Author:  Tim Pope <http://tpo.pe/>
 License: Same terms as Vim itself (see |license|)
 
 This plugin is only available if 'compatible' is not set.

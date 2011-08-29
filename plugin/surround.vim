@@ -1,5 +1,5 @@
 " surround.vim - Surroundings
-" Author:       Tim Pope <vimNOSPAM@tpope.org>
+" Author:       Tim Pope <http://tpo.pe/>
 " Version:      1.90
 " GetLatestVimScripts: 1697 1 :AutoInstall: surround.vim
 "
