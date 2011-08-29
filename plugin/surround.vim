@@ -547,7 +547,6 @@ nnoremap <silent> <Plug>YSsurround :<C-U>call <SID>opfunc2(v:count1)<CR>
 " <C-U> discards the numerical argument but there's not much we can do with it
 nnoremap <silent> <Plug>Ysurround  :<C-U>set opfunc=<SID>opfunc<CR>g@
 nnoremap <silent> <Plug>YSurround  :<C-U>set opfunc=<SID>opfunc2<CR>g@
-vnoremap <silent> <Plug>Vsurround  :<C-U>call <SID>opfunc(visualmode())<CR>
 vnoremap <silent> <Plug>VSurround  :<C-U>call <SID>opfunc(visualmode(),visualmode() ==# 'V' ? 1 : 0)<CR>
 vnoremap <silent> <Plug>VgSurround :<C-U>call <SID>opfunc(visualmode(),visualmode() ==# 'V' ? 0 : 1)<CR>
 inoremap <silent> <Plug>Isurround  <C-R>=<SID>insert()<CR>
@@ -561,13 +560,6 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
   nmap      yss  <Plug>Yssurround
   nmap      ySs  <Plug>YSsurround
   nmap      ySS  <Plug>YSsurround
-  if !hasmapto("<Plug>Vsurround","v") && !hasmapto("<Plug>VSurround","v")
-    if exists(":xmap")
-      xmap  s    <Plug>Vsurround
-    else
-      vmap  s    <Plug>Vsurround
-    endif
-  endif
   if !hasmapto("<Plug>VSurround","v")
     if exists(":xmap")
       xmap  S    <Plug>VSurround
