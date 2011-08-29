@@ -100,9 +100,7 @@ TARGETS                                         *surround-targets*
 
 The |ds| and |cs| commands both take a target as their first argument.  The
 possible targets are based closely on the |text-objects| provided by Vim.
-In order for a target to work, the corresponding text object must be
-supported in the version of Vim used (Vim 7 adds several text objects, and
-thus is highly recommended).  All targets are currently just one character.
+All targets are currently just one character.
 
 Eight punctuation marks, (, ), {, }, [, ], <, and >, represent themselves
 and their counterparts.  If the opening mark is used, contained whitespace is

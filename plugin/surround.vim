@@ -3,7 +3,7 @@
 " Version:      1.90
 " GetLatestVimScripts: 1697 1 :AutoInstall: surround.vim
 
-if exists("g:loaded_surround") || &cp
+if exists("g:loaded_surround") || &cp || v:version < 700
   finish
 endif
 let g:loaded_surround = 1
@@ -21,10 +21,10 @@ endfunction
 function! s:inputtarget()
   let c = s:getchar()
   while c =~ '^\d\+$'
-    let c = c . s:getchar()
+    let c .= s:getchar()
   endwhile
   if c == " "
-    let c = c . s:getchar()
+    let c .= s:getchar()
   endif
   if c =~ "\<Esc>\|\<C-C>\|\0"
     return ""
@@ -36,7 +36,7 @@ endfunction
 function! s:inputreplacement()
   let c = s:getchar()
   if c == " "
-    let c = c . s:getchar()
+    let c .= s:getchar()
   endif
   if c =~ "\<Esc>" || c =~ "\<C-C>"
     return ""
@@ -75,19 +75,9 @@ function! s:extractafter(str)
   endif
 endfunction
 
-function! s:repeat(str,count)
-  let cnt = a:count
-  let str = ""
-  while cnt > 0
-    let str = str . a:str
-    let cnt = cnt - 1
-  endwhile
-  return str
-endfunction
-
 function! s:fixindent(str,spc)
-  let str = substitute(a:str,'\t',s:repeat(' ',&sw),'g')
-  let spc = substitute(a:spc,'\t',s:repeat(' ',&sw),'g')
+  let str = substitute(a:str,'\t',repeat(' ',&sw),'g')
+  let spc = substitute(a:spc,'\t',repeat(' ',&sw),'g')
   let str = substitute(str,'\(\n\|\%^\).\@=','\1'.spc,'g')
   if ! &et
     let str = substitute(str,'\s\{'.&ts.'\}',"\t",'g')
@@ -97,15 +87,14 @@ endfunction
 
 function! s:process(string)
   let i = 0
-  while i < 7
-    let i = i + 1
+  for i in range(7)
     let repl_{i} = ''
     let m = matchstr(a:string,nr2char(i).'.\{-\}\ze'.nr2char(i))
     if m != ''
       let m = substitute(strpart(m,1),'\r.*','','')
       let repl_{i} = input(substitute(m,':\s*$','','').': ')
     endif
-  endwhile
+  endfor
   let s = ""
   let i = 0
   while i < strlen(a:string)
@@ -113,7 +102,7 @@ function! s:process(string)
     if char2nr(char) < 8
       let next = stridx(a:string,char,i+1)
       if next == -1
-        let s = s . char
+        let s .= char
       else
         let insertion = repl_{char2nr(char)}
         let subs = strpart(a:string,i+1,next-i-1)
@@ -124,13 +113,13 @@ function! s:process(string)
           let r = stridx(sub,"\r")
           let insertion = substitute(insertion,strpart(sub,0,r),strpart(sub,r+1),'')
         endwhile
-        let s = s . insertion
+        let s .= insertion
         let i = next
       endif
     else
-      let s = s . char
+      let s .= char
     endif
-    let i = i + 1
+    let i += 1
   endwhile
   return s
 endfunction
@@ -173,7 +162,7 @@ function! s:wrap(string,char,type,...)
     let dounmapp = 0
     let dounmapb = 0
     if !maparg(">","c")
-      let dounmapb= 1
+      let dounmapb = 1
       " Hide from AsNeeded
       exe "cn"."oremap > <CR>"
     endif
@@ -199,7 +188,7 @@ function! s:wrap(string,char,type,...)
       endif
       if newchar == "\<C-T>" || newchar == ","
         if type ==# "v" || type ==# "V"
-          let before = before . "\n\t"
+          let before .= "\n\t"
         endif
         if type ==# "v"
           let after  = "\n". after
@@ -210,7 +199,7 @@ function! s:wrap(string,char,type,...)
     " LaTeX
     let env = input('\begin{')
     let env = '{' . env
-    let env = env . s:closematch(env)
+    let env .= s:closematch(env)
     echo '\begin'.env
     if env != ""
       let before = '\begin'.env
@@ -222,8 +211,8 @@ function! s:wrap(string,char,type,...)
       let before = substitute(fnc,'($','','').'('
       let after  = ')'
       if newchar ==# 'F'
-        let before = before . ' '
-        let after  = ' ' . after
+        let before .= ' '
+        let after = ' ' . after
       endif
     endif
   elseif idx >= 0
@@ -249,14 +238,14 @@ function! s:wrap(string,char,type,...)
       let after  = initspaces.after
     endif
     if keeper !~ '\n$' && after !~ '^\n'
-      let keeper = keeper . "\n"
+      let keeper .= "\n"
     elseif keeper =~ '\n$' && after =~ '^\n'
       let after = strpart(after,1)
     endif
     if before !~ '\n\s*$'
-      let before = before . "\n"
+      let before .= "\n"
       if special
-        let before = before . "\t"
+        let before .= "\t"
       endif
     endif
   endif
@@ -300,7 +289,7 @@ function! s:insert(...) " {{{1
   let char = s:inputreplacement()
   while char == "\<CR>" || char == "\<C-S>"
     " TODO: use total count for additional blank lines
-    let linemode = linemode + 1
+    let linemode += 1
     let char = s:inputreplacement()
   endwhile
   if char == ""
