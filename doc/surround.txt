@@ -78,15 +78,6 @@ seems to be no way in Vim Script to differentiate between a jagged end of line
 selection and a virtual block selected past the end of the line, so two maps
 were needed).
 
-Additionally, there is a legacy "s" or *vs* mapping which is basically the
-same as |vS|.  Due to popular demand of wanting to use "s" as Vim does to mean
-replacing the selection (also available as "c"), this mapping is going away.
-If you were one of these people and would like to disable "s" with the current
-release, indicate this to surround.vim by assigning the "s" mapping to
-something else.
->
-  xmap <Leader>s <Plug>Vsurround
-<
                                                 *i_CTRL-G_s* *i_CTRL-G_S*
 Finally, there is an experimental insert mode mapping on <C-G>s and <C-S>.
 Beware that the latter won't work on terminals with flow control (if you
