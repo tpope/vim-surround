@@ -542,25 +542,16 @@ inoremap <silent> <Plug>Isurround  <C-R>=<SID>insert()<CR>
 inoremap <silent> <Plug>ISurround  <C-R>=<SID>insert(1)<CR>
 
 if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
-  nmap      ds   <Plug>Dsurround
-  nmap      cs   <Plug>Csurround
-  nmap      ys   <Plug>Ysurround
-  nmap      yS   <Plug>YSurround
-  nmap      yss  <Plug>Yssurround
-  nmap      ySs  <Plug>YSsurround
-  nmap      ySS  <Plug>YSsurround
-  if !hasmapto("<Plug>VSurround","v")
-    if exists(":xmap")
-      xmap  S    <Plug>VSurround
-    else
-      vmap  S    <Plug>VSurround
-    endif
-  endif
-  if exists(":xmap")
-    xmap    gS   <Plug>VgSurround
-  else
-    vmap    gS   <Plug>VgSurround
-  endif
+  nmap ds  <Plug>Dsurround
+  nmap cs  <Plug>Csurround
+  nmap ys  <Plug>Ysurround
+  nmap yS  <Plug>YSurround
+  nmap yss <Plug>Yssurround
+  nmap ySs <Plug>YSsurround
+  nmap ySS <Plug>YSsurround
+  xmap S   <Plug>VSurround
+  xmap gS  <Plug>VgSurround
+  xnoremap <silent> s :<C-U>echoerr 'surround.vim: Visual mode s has been removed in favor of S'<CR>
   if !hasmapto("<Plug>Isurround","i") && "" == mapcheck("<C-S>","i")
     imap    <C-S> <Plug>Isurround
   endif
