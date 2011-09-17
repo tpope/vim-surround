@@ -72,7 +72,7 @@ surroundings are placed on separate lines and indented.  In blockwise visual
 mode, each line is surrounded.
 
 A "gS" in visual mode, known as *vgS* , behaves similarly.  In linewise visual
-mode, the automatic indenting is surpressed.  In blockwise visual mode, this
+mode, the automatic indenting is suppressed.  In blockwise visual mode, this
 enables surrounding past the end of the like with 'virtualedit' set (there
 seems to be no way in Vim Script to differentiate between a jagged end of line
 selection and a virtual block selected past the end of the line, so two maps
