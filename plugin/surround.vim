@@ -147,6 +147,9 @@ function! s:wrap(string,char,type,...)
   if newchar == ' '
     let before = ''
     let after  = ''
+  elseif newchar == '„'
+    let before = '„'
+    let after  = '“'
   elseif exists("b:surround_".char2nr(newchar))
     let all    = s:process(b:surround_{char2nr(newchar)})
     let before = s:extractbefore(all)
