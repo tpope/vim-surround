@@ -20,7 +20,7 @@ examples.  An asterisk (*) is used to denote the cursor position.
   [123+4*56]/2              cs])        (123+456)/2
   "Look ma, I'm *HTML!"     cs"<q>      <q>Look ma, I'm HTML!</q>
   if *x>3 {                 ysW(        if ( x>3 ) {
-  my $str = *whee!;         vlllls'     my $str = 'whee!';
+  my $str = *whee!;         vllllS'     my $str = 'whee!';
 
 While a few features of this plugin will work in older versions of Vim,
 Vim 7 is recommended for full functionality.
@@ -65,15 +65,15 @@ whitespace.
 There is also *yS* and *ySS* which indent the surrounded text and place it
 on a line of its own.
 
-In visual mode, a simple "s" with an argument wraps the selection.  This is
+In visual mode, a simple "S" with an argument wraps the selection.  This is
 referred to as the *vS* mapping, although ordinarily there will be
-additional keystrokes between the v and s.  In linewise visual mode, the
+additional keystrokes between the v and S.  In linewise visual mode, the
 surroundings are placed on separate lines and indented.  In blockwise visual
 mode, each line is surrounded.
 
 A "gS" in visual mode, known as *vgS* , behaves similarly.  In linewise visual
 mode, the automatic indenting is suppressed.  In blockwise visual mode, this
-enables surrounding past the end of the like with 'virtualedit' set (there
+enables surrounding past the end of the line with 'virtualedit' set (there
 seems to be no way in Vim Script to differentiate between a jagged end of line
 selection and a virtual block selected past the end of the line, so two maps
 were needed).
@@ -117,7 +117,7 @@ however, newlines are sometimes added and/or removed.
 REPLACEMENTS                                    *surround-replacements*
 
 A replacement argument is a single character, and is required by |cs|, |ys|,
-and |vs|.  Undefined replacement characters (with the exception of alphabetic
+and |vS|.  Undefined replacement characters (with the exception of alphabetic
 characters) default to placing themselves at the beginning and end of the
 destination, which can be useful for characters like / and |.
 
