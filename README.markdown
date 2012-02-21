@@ -1,57 +1,91 @@
 surround.vim
 ============
 
-Surround.vim is all about "surroundings": parentheses, brackets, quotes,
-XML tags, and more.  The plugin provides mappings to easily delete,
-change and add such surroundings in pairs.
+Surround.vim is a Vim plugin that is all about "surroundings": parentheses, 
+brackets, quotes, XML tags, and more.  The plugin provides mappings to easily 
+delete, change and add such surroundings in pairs.
 
-It's easiest to explain with examples.  Press `cs"'` inside
+How to Use
+----------
+
+Surround.vim may be easiest to explain by taking a look at a few examples.  
+
+### Single character surroundings
+
+Lets change a set of double quotes to single quotes.  Surround.vim makes this
+simple with four key strokes.  Start with this bit of text:
 
     "Hello world!"
 
-to change it to
+Move your cursor so that it is within the double quotes.  Now type the letter 
+`c` (change), the letter `s` (surround), the double quote `"`, and then the 
+single qoute `'`.  The double quotes instantly become single quotes.
 
     'Hello world!'
-
-Now press `cs'<q>` to change it to
-
-    <q>Hello world!</q>
-
-To go full circle, press `cst"` to get
-
-    "Hello world!"
-
-To remove the delimiters entirely, press `ds"`.
+    
+To remove the delimiters entirely, type `d` (delete), `s` (surround), and the 
+single quote `'`, all together like this: `ds'`.
 
     Hello world!
 
-Now with the cursor on "Hello", press `ysiw]` (`iw` is a text object).
+#### Surround a text object
+
+Now with the cursor on the word "Hello", select the word and surround
+it brackets by typing: `ysiw]`. (`iw` or "inner word" is one of Vim's 
+[text objects](http://vimdoc.sourceforge.net/htmldoc/motion.html#object-select),
+`y` is copy or "yank", but in this case is being used to select the text object 
+without changing it.)
 
     [Hello] world!
+    
+This works with other text objects like sentences `is` and paragraphs `ip`.
 
-Let's make that braces and add some space (use `}` instead of `{` for no
-space): `cs]{`
+#### Space or no space
+
+For pairs of surrounds, use the beginning character `[` to surround 
+with some space.  Use the ending `]` to surround tightly without space.
+
+Let's change the brackets to braces and add some space. Type: `cs]{`.
 
     { Hello } world!
 
-Now wrap the entire line in parentheses with `yssb` or `yss)`.
+Now wrap the entire line in parentheses without space.  Type: `yss)`.
 
     ({ Hello } world!)
 
-Revert to the original text: `ds{ds)`
+Revert to the original text with quotes: `ds{ds)yss"`
 
-    Hello world!
+    "Hello world!"
+    
+### Tag surroundings
 
-Emphasize hello: `ysiw<em>`
+HTML and XML tag surroundings are triggered with the `<` character, after 
+which you can type the whole tag and attributes.
+
+Lets change the quotes to the html `<q>` tag.  Type `cs'<q`, hit enter, 
+and the text instantly becomes:
+
+    <q>Hello world!</q>
+
+When dealing with existing HTML or XML tags, we don't have to type 
+out the whole tag, just use the `t` (till).  So, to go full circle, 
+press `cst"` to change the `<q>` tags to quotation marks `"`:
+
+    "Hello world!"
+
+Emphasize hello: `ysiw<em`
 
     <em>Hello</em> world!
 
 Finally, let's try out visual mode. Press a capital V (for linewise
-visual mode) followed by `S<p class="important">`.
+visual mode) followed by `S<p class="important"`.
 
     <p class="important">
       <em>Hello</em> world!
     </p>
+    
+Notes
+-----
 
 This plugin is very powerful for HTML and XML editing, a niche which
 currently seems underfilled in Vim land.  (As opposed to HTML/XML
