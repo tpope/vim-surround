@@ -127,6 +127,7 @@ endfunction
 function! s:wrap(string,char,type,...)
   let keeper = a:string
   let newchar = a:char
+  let s:tag = ""
   let type = a:type
   let linemode = type ==# 'V' ? 1 : 0
   let special = a:0 ? a:1 : 0
@@ -178,8 +179,10 @@ function! s:wrap(string,char,type,...)
     if dounmapb
       silent! cunmap >
     endif
+    let s:tag = tag
     if tag != ""
       let tag = substitute(tag,'>*$','','')
+      let s:tag = tag . '>'
       let before = '<'.tag.'>'
       if tag =~ '/$'
         let after = ''
@@ -432,7 +435,7 @@ function! s:dosurround(...) " {{{1
   if newchar == ""
     silent! call repeat#set("\<Plug>Dsurround".char,scount)
   else
-    silent! call repeat#set("\<Plug>Csurround".char.newchar,scount)
+    silent! call repeat#set("\<Plug>Csurround".char.newchar.s:tag,scount)
   endif
 endfunction " }}}1
 
@@ -505,7 +508,7 @@ function! s:opfunc(type,...) " {{{1
   let &selection = sel_save
   let &clipboard = cb_save
   if a:type =~ '^\d\+$'
-    silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char,a:type)
+    silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char.s:tag,a:type)
   endif
 endfunction
 
