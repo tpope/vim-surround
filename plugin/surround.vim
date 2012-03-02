@@ -507,7 +507,7 @@ function! s:opfunc(type,...) " {{{1
   let &selection = sel_save
   let &clipboard = cb_save
   if a:type =~ '^\d\+$'
-    silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char,a:type)
+    silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char.s:tag,a:type)
   endif
 endfunction
 
