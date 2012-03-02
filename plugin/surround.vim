@@ -127,6 +127,7 @@ endfunction
 function! s:wrap(string,char,type,...)
   let keeper = a:string
   let newchar = a:char
+  let s:tag = ""
   let type = a:type
   let linemode = type ==# 'V' ? 1 : 0
   let special = a:0 ? a:1 : 0
