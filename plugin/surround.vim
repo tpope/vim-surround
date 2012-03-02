@@ -178,8 +178,10 @@ function! s:wrap(string,char,type,...)
     if dounmapb
       silent! cunmap >
     endif
+    let s:tag = tag
     if tag != ""
       let tag = substitute(tag,'>*$','','')
+      let s:tag = tag . '>'
       let before = '<'.tag.'>'
       if tag =~ '/$'
         let after = ''
