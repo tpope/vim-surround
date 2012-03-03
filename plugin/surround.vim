@@ -160,6 +160,7 @@ function! s:wrap(string,char,type,...)
     let before = "\n"
     let after  = "\n\n"
   elseif newchar =~# "[tT\<C-T><,]"
+    " Tags
     let dounmapp = 0
     let dounmapb = 0
     if !maparg(">","c")
@@ -198,6 +199,7 @@ function! s:wrap(string,char,type,...)
         endif
       endif
     endif
+    let s:tag = tag . '>'
   elseif newchar ==# 'l' || newchar == '\'
     " LaTeX
     let env = input('\begin{')
