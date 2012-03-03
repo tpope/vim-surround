@@ -429,7 +429,7 @@ function! s:dosurround(...) " {{{1
   if getline('.') =~ '^\s\+$' && keeper =~ '^\s*\n'
     silent norm! cc
   endif
-  call setreg('"',removed,regtype)
+  call setreg('"',original,otype)
   let s:lastdel = removed
   let &clipboard = cb_save
   if newchar == ""
