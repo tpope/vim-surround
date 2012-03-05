@@ -30,11 +30,10 @@ single quote `'`, all together like this: `ds'`.
 
 #### Surround a text object
 
-Now with the cursor on the word "Hello", select the word and surround
-it brackets by typing: `ysiw]`. (`iw` or "inner word" is one of Vim's 
+Now with the cursor on the word "Hello", you surround it with brackets 
+by typing: `ysiw]`. (`iw` or "inner word" is one of Vim's 
 [text objects](http://vimdoc.sourceforge.net/htmldoc/motion.html#object-select),
-`y` is copy or "yank", but in this case is being used to select the text object 
-without changing it.)
+you might think, "_you surround inner word_".)
 
     [Hello] world!
     
@@ -53,7 +52,7 @@ Now wrap the entire line in parentheses without space.  Type: `yss)`.
 
     ({ Hello } world!)
 
-Revert to the original text with quotes: `ds{ds)yss"`
+Revert to the original text with quotes: `ds)` `ds{` `yss"`
 
     "Hello world!"
     
@@ -62,23 +61,23 @@ Revert to the original text with quotes: `ds{ds)yss"`
 HTML and XML tag surroundings are triggered with the `<` character, after 
 which you can type the whole tag and attributes.
 
-Lets change the quotes to the html `<q>` tag.  Type `cs'<q`, hit enter, 
-and the text instantly becomes:
+Let's change the quotes to the html `<q>` tag.  Type `cs"<q>`, and the 
+text instantly becomes:
 
     <q>Hello world!</q>
 
-When dealing with existing HTML or XML tags, we don't have to type 
-out the whole tag, just use the `t` (till).  So, to go full circle, 
-press `cst"` to change the `<q>` tags to quotation marks `"`:
+When dealing with existing HTML or XML tags, you don't have to type 
+out the whole tag, just use `t` to refer to the immediately surrounding tag 
+pair.  So, to _delete surrounding tags_ type: `dst` 
 
-    "Hello world!"
+    Hello world!
 
-Emphasize hello: `ysiw<em`
+_You surround_ an _inner word_ with the emphasis tag like this: `ysiw<em>`
 
     <em>Hello</em> world!
 
 Finally, let's try out visual mode. Press a capital V (for linewise
-visual mode) followed by `S<p class="important"`.
+visual mode) followed by `S<p class="important">`.
 
     <p class="important">
       <em>Hello</em> world!
