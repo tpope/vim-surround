@@ -510,7 +510,7 @@ function! s:opfunc(type,...) " {{{1
   if a:type =~ '^\d\+$'
     silent! call repeat#set("\<Plug>Y".(a:0 && a:1 ? "S" : "s")."surround".char.s:tag,a:type)
   else
-    silent! call repeat#set("\<Plug>Yrepeat".char.s:tag,a:type)
+    silent! call repeat#set("\<Plug>SurroundRepeat".char.s:tag)
   endif
 endfunction
 
@@ -534,6 +534,7 @@ function! s:closematch(str) " {{{1
   endif
 endfunction " }}}1
 
+nnoremap <silent> <Plug>SurroundRepeat .
 nnoremap <silent> <Plug>Dsurround  :<C-U>call <SID>dosurround(<SID>inputtarget())<CR>
 nnoremap <silent> <Plug>Csurround  :<C-U>call <SID>changesurround()<CR>
 nnoremap <silent> <Plug>Yssurround :<C-U>call <SID>opfunc(v:count1)<CR>
@@ -541,7 +542,6 @@ nnoremap <silent> <Plug>YSsurround :<C-U>call <SID>opfunc2(v:count1)<CR>
 " <C-U> discards the numerical argument but there's not much we can do with it
 nnoremap <silent> <Plug>Ysurround  :<C-U>set opfunc=<SID>opfunc<CR>g@
 nnoremap <silent> <Plug>YSurround  :<C-U>set opfunc=<SID>opfunc2<CR>g@
-nnoremap <silent> <Plug>Yrepeat    :<C-U>execute 'normal! .'.<SID>inputtarget()<CR>
 vnoremap <silent> <Plug>VSurround  :<C-U>call <SID>opfunc(visualmode(),visualmode() ==# 'V' ? 1 : 0)<CR>
 vnoremap <silent> <Plug>VgSurround :<C-U>call <SID>opfunc(visualmode(),visualmode() ==# 'V' ? 0 : 1)<CR>
 inoremap <silent> <Plug>Isurround  <C-R>=<SID>insert()<CR>
