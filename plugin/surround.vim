@@ -415,7 +415,7 @@ function! s:dosurround(...) " {{{1
   else
     let pcmd = "P"
   endif
-  if line('.') < oldlnum && regtype ==# "V"
+  if line('.') + 1 < oldlnum && regtype ==# "V"
     let pcmd = "p"
   endif
   call setreg('"',keeper,regtype)
