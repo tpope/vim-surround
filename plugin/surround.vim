@@ -159,6 +159,9 @@ function! s:wrap(string,char,type,...)
   elseif newchar ==# "p"
     let before = "\n"
     let after  = "\n\n"
+  elseif newchar ==# 's'
+    let before = ' '
+    let after  = ''
   elseif newchar =~# "[tT\<C-T><,]"
     let dounmapp = 0
     let dounmapb = 0

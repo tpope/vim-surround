@@ -133,6 +133,9 @@ attributes here and they will be stripped from the closing tag.  End your
 input by pressing <CR> or >.  If <C-T> is used, the tags will appear on lines
 by themselves.
 
+If s is used, a leading but not trailing space is added.  This is useful for
+removing parentheses from a function call with csbs.
+
 CUSTOMIZING                                     *surround-customizing*
 
 The following adds a potential replacement on "-" (ASCII 45) in PHP files.
