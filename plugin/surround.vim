@@ -340,7 +340,7 @@ function! s:insert(...) " {{{1
 endfunction " }}}1
 
 function! s:reindent() " {{{1
-  if exists("b:surround_indent") ? b:surround_indent : (exists("g:surround_indent") && g:surround_indent)
+  if exists("b:surround_indent") ? b:surround_indent : (!exists("g:surround_indent") || g:surround_indent)
     silent norm! '[=']
   endif
 endfunction " }}}1
