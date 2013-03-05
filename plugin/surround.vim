@@ -224,6 +224,12 @@ function! s:wrap(string,char,type,...)
         let after = ' ' . after
       endif
     endif
+  elseif newchar ==# "R" || newchar == "\<C-R>"
+    let blk = input('block: ')
+    if blk != ""
+      let before = blk . "\n\t"
+      let after = "\nend"
+    endif
   elseif newchar ==# "\<C-F>"
     let fnc = input('function: ')
     let before = '('.fnc.' '
