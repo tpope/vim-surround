@@ -405,7 +405,7 @@ function! s:dosurround(...) " {{{1
     let keeper = substitute(substitute(keeper,'^/\*\s\=','',''),'\s\=\*$','','')
   else
     " One character backwards
-    call search('.','bW')
+    call search('\v.','bW')
     exe "norm! da".char
   endif
   let removed = getreg('"')
