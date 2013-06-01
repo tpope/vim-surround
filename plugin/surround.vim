@@ -236,6 +236,11 @@ function! s:wrap(string,char,type,...)
   elseif newchar == "\<C-[>" || newchar == "\<C-]>"
     let before = "{\n\t"
     let after  = "\n}"
+  elseif newchar ==# 'o'
+    let replacement = substitute(input(">> "),"\\\\r","\r", '')
+    let all    = s:process(replacement)
+    let before = s:extractbefore(all)
+    let after  =  s:extractafter(all)
   elseif newchar !~ '\a'
     let before = newchar
     let after  = newchar
