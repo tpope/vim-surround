@@ -379,7 +379,7 @@ function! s:dosurround(...) " {{{1
   let strcount = (scount == 1 ? "" : scount)
   if char == '/'
     exe 'norm! '.strcount.'[/d'.strcount.']/'
-  elseif char =~# '[[:punct:]]' && char !~# '[][(){}<>]'
+  elseif char =~# '[[:punct:]]' && char !~# '[][(){}<>"''`]'
     exe 'norm! T'.char
     if getline('.')[col('.')-1] == char
       exe 'norm! l'
