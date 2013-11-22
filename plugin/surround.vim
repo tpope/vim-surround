@@ -585,4 +585,4 @@ if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
   endif
 endif
 
-" vim:set ft=vim sw=2 sts=2 et:
+" vim:set ft=vim foldmethod=marker sw=2 sts=2 et:
