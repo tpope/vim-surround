@@ -416,7 +416,7 @@ function! s:dosurround(...) " {{{1
     exe 'norm! df'.char
   else
     " One character backwards
-    call search('.','bW')
+    call search('\v.','bW')
     exe "norm! da".char
   endif
   let removed = getreg('"')
