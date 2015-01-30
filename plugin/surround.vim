@@ -472,6 +472,15 @@ function! s:changesurround() " {{{1
   call s:dosurround(a,b)
 endfunction " }}}1
 
+function! s:changesurroundCursor() " {{{1
+  let a = getline(".")[col(".")-1]
+  let b = s:inputreplacement()
+  if b == ""
+    return s:beep()
+  endif
+  call s:dosurround(a,b)
+endfunction " }}}1
+
 function! s:opfunc(type,...) " {{{1
   let char = s:inputreplacement()
   if char == ""
@@ -558,6 +567,7 @@ endfunction " }}}1
 nnoremap <silent> <Plug>SurroundRepeat .
 nnoremap <silent> <Plug>Dsurround  :<C-U>call <SID>dosurround(<SID>inputtarget())<CR>
 nnoremap <silent> <Plug>Csurround  :<C-U>call <SID>changesurround()<CR>
+nnoremap <silent> <Plug>CsurroundCursor  :<C-U>call <SID>changesurroundCursor()<CR>
 nnoremap <silent> <Plug>Yssurround :<C-U>call <SID>opfunc(v:count1)<CR>
 nnoremap <silent> <Plug>YSsurround :<C-U>call <SID>opfunc2(v:count1)<CR>
 " <C-U> discards the numerical argument but there's not much we can do with it
@@ -571,6 +581,7 @@ inoremap <silent> <Plug>ISurround  <C-R>=<SID>insert(1)<CR>
 if !exists("g:surround_no_mappings") || ! g:surround_no_mappings
   nmap ds  <Plug>Dsurround
   nmap cs  <Plug>Csurround
+  nmap ct  <Plug>CsurroundCursor
   nmap ys  <Plug>Ysurround
   nmap yS  <Plug>YSurround
   nmap yss <Plug>Yssurround
