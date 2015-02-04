@@ -457,7 +457,7 @@ function! s:dosurround(...) " {{{1
   if newchar == ""
     silent! call repeat#set("\<Plug>Dsurround".char,scount)
   else
-    silent! call repeat#set("\<Plug>C".(a:0 > 2 && a:3 ? "S" : "s")."urround".char.newchar.s:inpur,scount)
+    silent! call repeat#set("\<Plug>C".(a:0 > 2 && a:3 ? "S" : "s")."urround".char.newchar.s:input,scount)
   endif
 endfunction " }}}1
 
