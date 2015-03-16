@@ -23,7 +23,7 @@ function! s:inputtarget()
   while c =~ '^\d\+$'
     let c .= s:getchar()
   endwhile
-  if c == " "
+  if c == " "  || c == "\\"
     let c .= s:getchar()
   endif
   if c =~ "\<Esc>\|\<C-C>\|\0"
@@ -35,7 +35,7 @@ endfunction
 
 function! s:inputreplacement()
   let c = s:getchar()
-  if c == " "
+  if c == " " || c == "\\"
     let c .= s:getchar()
   endif
   if c =~ "\<Esc>" || c =~ "\<C-C>"
@@ -139,9 +139,9 @@ function! s:wrap(string,char,type,removed,special)
   endif
   let pairs = "b()B{}r[]a<>"
   let extraspace = ""
-  if newchar =~ '^ '
+  if newchar =~ '^[\\ ]'
+    let extraspace =  strpart(newchar,0,1)
     let newchar = strpart(newchar,1)
-    let extraspace = ' '
   endif
   let idx = stridx(pairs,newchar)
   if newchar == ' '
@@ -209,7 +209,7 @@ function! s:wrap(string,char,type,removed,special)
         endif
       endif
     endif
-  elseif newchar ==# 'l' || newchar == '\'
+  elseif newchar ==# 'l'
     " LaTeX
     let env = input('\begin{')
     if env != ""
@@ -359,6 +359,9 @@ function! s:dosurround(...) " {{{1
   if char =~ '^\d\+'
     let scount = scount * matchstr(char,'^\d\+')
     let char = substitute(char,'^\d\+','','')
+  endif
+  if char =~ '^\\'
+    let char = strpart(char,1)
   endif
   if char =~ '^ '
     let char = strpart(char,1)
