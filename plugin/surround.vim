@@ -164,7 +164,7 @@ function! s:wrap(string,char,type,removed,special)
   elseif newchar ==# ':'
     let before = ':'
     let after = ''
-  elseif newchar =~# "[tT\<C-T><,]"
+  elseif newchar =~# "[tT\<C-T><]"
     let dounmapp = 0
     let dounmapb = 0
     if !maparg(">","c")
@@ -200,7 +200,7 @@ function! s:wrap(string,char,type,removed,special)
         let before = '<'.tag.attributes.'>'
         let after  = '</'.substitute(tag,' .*','','').'>'
       endif
-      if newchar == "\<C-T>" || newchar == ","
+      if newchar == "\<C-T>"
         if type ==# "v" || type ==# "V"
           let before .= "\n\t"
         endif
