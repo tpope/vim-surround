@@ -386,7 +386,7 @@ function! s:dosurround(...) " {{{1
   let strcount = (scount == 1 ? "" : scount)
   if char == '/'
     exe 'norm! '.strcount.'[/d'.strcount.']/'
-  elseif char =~# '[[:punct:]]' && char !~# '[][(){}<>"''`]'
+  elseif char =~# '[[:punct:][:space:]]' && char !~# '[][(){}<>"''`]'
     exe 'norm! T'.char
     if getline('.')[col('.')-1] == char
       exe 'norm! l'
@@ -416,7 +416,7 @@ function! s:dosurround(...) " {{{1
     norm! "_x
     call setreg('"','/**/',"c")
     let keeper = substitute(substitute(keeper,'^/\*\s\=','',''),'\s\=\*$','','')
-  elseif char =~# '[[:punct:]]' && char !~# '[][(){}<>]'
+  elseif char =~# '[[:punct:][:space:]]' && char !~# '[][(){}<>]'
     exe 'norm! F'.char
     exe 'norm! df'.char
   else
