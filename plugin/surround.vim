@@ -164,7 +164,8 @@ function! s:wrap(string,char,type,removed,special)
   elseif newchar ==# ':'
     let before = ':'
     let after = ''
-  elseif newchar =~# "[tT\<C-T><,]"
+  elseif &ft =~# '^html\|htm\|xml\|xhtml$' && newchar =~# "[tT\<C-T><,]"
+    " html tag <>
     let dounmapp = 0
     let dounmapb = 0
     if !maparg(">","c")
@@ -209,7 +210,7 @@ function! s:wrap(string,char,type,removed,special)
         endif
       endif
     endif
-  elseif newchar ==# 'l' || newchar == '\'
+  elseif &ft =~# '^latex|tex$' && newchar ==# 'l' || newchar == '\'
     " LaTeX
     let env = input('\begin{')
     if env != ""
