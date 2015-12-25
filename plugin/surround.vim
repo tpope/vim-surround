@@ -185,27 +185,32 @@ function! s:wrap(string,char,type,removed,special)
     endif
     let s:input = tag
     if tag != ""
-      let keepAttributes = ( match(tag, ">$") == -1 )
-      let tag = substitute(tag,'>*$','','')
-      let attributes = ""
-      if keepAttributes
-        let attributes = matchstr(a:removed, '<[^ \t\n]\+\zs\_.\{-\}\ze>')
-      endif
-      let s:input = tag . '>'
-      if tag =~ '/$'
-        let tag = substitute(tag, '/$', '', '')
-        let before = '<'.tag.attributes.' />'
-        let after = ''
+      if tag == "<"
+        let before = '<<'
+        let after = '>>'
       else
-        let before = '<'.tag.attributes.'>'
-        let after  = '</'.substitute(tag,' .*','','').'>'
-      endif
-      if newchar == "\<C-T>"
-        if type ==# "v" || type ==# "V"
-          let before .= "\n\t"
+        let keepAttributes = ( match(tag, ">$") == -1 )
+        let tag = substitute(tag,'>*$','','')
+        let attributes = ""
+        if keepAttributes
+          let attributes = matchstr(a:removed, '<[^ \t\n]\+\zs\_.\{-\}\ze>')
         endif
-        if type ==# "v"
-          let after  = "\n". after
+        let s:input = tag . '>'
+        if tag =~ '/$'
+          let tag = substitute(tag, '/$', '', '')
+          let before = '<'.tag.attributes.' />'
+          let after = ''
+        else
+          let before = '<'.tag.attributes.'>'
+          let after  = '</'.substitute(tag,' .*','','').'>'
+        endif
+        if newchar == "\<C-T>"
+          if type ==# "v" || type ==# "V"
+            let before .= "\n\t"
+          endif
+          if type ==# "v"
+            let after  = "\n". after
+          endif
         endif
       endif
     endif
