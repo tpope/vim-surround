@@ -149,7 +149,7 @@ return will be replaced by the original text.
 This can be used in a PHP file as in the following example.
 
   Old text                  Command     New text ~
-  print "Hello *world!"     yss-        <?php print "Hello world!" ?>
+  print "Hello world!"     yss-        <?php print "Hello world!" ?>
 
 Additionally, one can use a global variable for globally available
 replacements.
