@@ -5,7 +5,15 @@ Surround.vim is all about "surroundings": parentheses, brackets, quotes,
 XML tags, and more.  The plugin provides mappings to easily delete,
 change and add such surroundings in pairs.
 
-It's easiest to explain with examples.  Press `cs"'` inside
+It's easiest to explain with examples.  Press `cs3w"` inside 'Hello' to change
+
+    Hello World!
+
+into
+
+    "Hello World!"
+
+Press `cs"'` inside
 
     "Hello world!"
 
