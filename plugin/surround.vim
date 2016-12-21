@@ -26,7 +26,7 @@ function! s:inputtarget()
   if c == " "
     let c .= s:getchar()
   endif
-  if c =~ "\<Esc>\|\<C-C>\|\0"
+  if c =~ "\<Esc>" || c =~ "\<C-C>"
     return ""
   else
     return c
