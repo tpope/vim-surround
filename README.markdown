@@ -25,7 +25,7 @@ To remove the delimiters entirely, press `ds"`.
 
     Hello world!
 
-Now with the cursor on "Hello", press `ysiw]` (`iw` is a text object, remember this with *"you-surround-in-word"*).
+Now with the cursor on "Hello", press `ysiw]` (`iw` is a text object, remember this with *"you-surround-inner-word"*).
 
     [Hello] world!
 
