@@ -105,7 +105,6 @@ around the target.
   $*total += 1              ysf1(       $( total += 1 )
   $*( total += 1 )          ys%)        $(( total += 1 ))
 
-Fix error in documentation and add examples
 The targets b, B, r, and a are aliases for ), }, ], and > 
 (the first two mirror Vim; the second two are completely arbitrary and
 subject to change).
