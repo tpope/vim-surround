@@ -137,7 +137,7 @@ function! s:wrap(string,char,type,removed,special)
   else
     let initspaces = matchstr(getline('.'),'\%^\s*')
   endif
-  let pairs = "b()B{}r[]a<>"
+  let pairs = 'b()B{}r[]a<>q""'
   let extraspace = ""
   if newchar =~ '^ '
     let newchar = strpart(newchar,1)
