@@ -406,6 +406,8 @@ function! s:dosurround(...) " {{{1
       exe 'norm! l'
     endif
     exe 'norm! dt'.char
+  elseif char == 'f'
+    exe 'norm! d'.strcount.'i('
   else
     exe 'norm! d'.strcount.'i'.char
   endif
@@ -436,7 +438,14 @@ function! s:dosurround(...) " {{{1
   else
     " One character backwards
     call search('\m.', 'bW')
-    exe "norm! da".char
+    if char == "f"
+      exe "norm! da("
+      exe "norm! bdw"
+      " will put the deleted function name into the unnamed reg
+      let original = getreg('"')
+    else
+      exe "norm! da".char
+    endif
   endif
   let removed = getreg('"')
   let rem2 = substitute(removed,'\n.*','','')
