@@ -130,6 +130,7 @@ function! s:wrap(string,char,type,removed,special)
   let s:input = ""
   let type = a:type
   let linemode = type ==# 'V' ? 1 : 0
+  let mp = split(&matchpairs, '[:,]')   " assumes it's well-formed
   let before = ""
   let after  = ""
   if type ==# "V"
@@ -144,6 +145,7 @@ function! s:wrap(string,char,type,removed,special)
     let extraspace = ' '
   endif
   let idx = stridx(pairs,newchar)
+  let mpidx = index(mp, newchar)
   if newchar == ' '
     let before = ''
     let after  = ''
@@ -241,6 +243,11 @@ function! s:wrap(string,char,type,removed,special)
     let idx = idx / 3 * 3
     let before = strpart(pairs,idx+1,1) . spc
     let after  = spc . strpart(pairs,idx+2,1)
+  elseif mpidx >= 0
+    let spc = (mpidx % 2) == 1 ? " " : ""
+    let mpidx = mpidx / 2 * 2
+    let before = mp[mpidx] . spc
+    let after  = spc . mp[mpidx+1]
   elseif newchar == "\<C-[>" || newchar == "\<C-]>"
     let before = "{\n\t"
     let after  = "\n}"
@@ -391,6 +398,8 @@ function! s:dosurround(...) " {{{1
       return s:beep()
     endif
   endif
+  let mp = split(&matchpairs, '[:,]')   " assumes it's well-formed
+  let mpidx = index(mp, char)
   let cb_save = &clipboard
   set clipboard-=unnamed clipboard-=unnamedplus
   let append = ""
@@ -406,6 +415,13 @@ function! s:dosurround(...) " {{{1
       exe 'norm! l'
     endif
     exe 'norm! dt'.char
+  elseif mpidx >= 0
+    let mpidx = mpidx / 2 * 2
+    if getline('.')[col('.')-1] == mp[mpidx]
+      exe 'norm! l'
+    endif
+    exe 'norm! T'.mp[mpidx]
+    exe 'norm! dt'.mp[mpidx+1]
   else
     exe 'norm! d'.strcount.'i'.char
   endif
@@ -433,6 +449,9 @@ function! s:dosurround(...) " {{{1
   elseif char =~# '[[:punct:][:space:]]' && char !~# '[][(){}<>]'
     exe 'norm! F'.char
     exe 'norm! df'.char
+  elseif mpidx >= 0
+    exe 'norm! F'.mp[mpidx]
+    exe 'norm! df'.mp[mpidx+1]
   else
     " One character backwards
     call search('\m.', 'bW')
