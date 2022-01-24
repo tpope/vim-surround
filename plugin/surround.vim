@@ -35,7 +35,7 @@ endfunction
 
 function! s:inputreplacement()
   let c = s:getchar()
-  if c == " "
+  if c =~ "[ 0-9]"
     let c .= s:getchar()
   endif
   if c =~ "\<Esc>" || c =~ "\<C-C>"
@@ -164,6 +164,11 @@ function! s:wrap(string,char,type,removed,special)
   elseif newchar ==# ':'
     let before = ':'
     let after = ''
+  elseif newchar =~ '^[0-9].'
+    let scount = strpart(newchar,0,1)
+    let newchar = strpart(newchar,1)
+    let before = repeat(newchar, scount)
+    let after = repeat(newchar, scount)
   elseif newchar =~# "[tT\<C-T><]"
     let dounmapp = 0
     let dounmapb = 0
