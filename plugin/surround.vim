@@ -360,8 +360,8 @@ function! s:insert(...) " {{{1
   return "\<Del>"
 endfunction " }}}1
 
-function! s:reindent() " {{{1
-  if exists("b:surround_indent") ? b:surround_indent : (!exists("g:surround_indent") || g:surround_indent)
+function! s:reindent() abort " {{{1
+  if get(b:, 'surround_indent', get(g:, 'surround_indent', 1)) && (!empty(&equalprg) || !empty(&indentexpr) || &cindent || &smartindent || &lisp)
     silent norm! '[=']
   endif
 endfunction " }}}1
