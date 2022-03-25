@@ -367,6 +367,8 @@ function! s:reindent() abort " {{{1
 endfunction " }}}1
 
 function! s:dosurround(...) " {{{1
+  let sol_save = &startofline
+  set startofline
   let scount = v:count1
   let char = (a:0 ? a:1 : s:inputtarget())
   let spc = ""
@@ -388,6 +390,9 @@ function! s:dosurround(...) " {{{1
   if a:0 > 1
     let newchar = a:2
     if newchar == "\<Esc>" || newchar == "\<C-C>" || newchar == ""
+      if !sol_save
+        set nostartofline
+      endif
       return s:beep()
     endif
   endif
@@ -414,6 +419,9 @@ function! s:dosurround(...) " {{{1
   if keeper == ""
     call setreg('"',original,otype)
     let &clipboard = cb_save
+    if !sol_save
+      set nostartofline
+    endif
     return ""
   endif
   let oldline = getline('.')
@@ -477,6 +485,9 @@ function! s:dosurround(...) " {{{1
     silent! call repeat#set("\<Plug>Dsurround".char,scount)
   else
     silent! call repeat#set("\<Plug>C".(a:0 > 2 && a:3 ? "S" : "s")."urround".char.newchar.s:input,scount)
+  endif
+  if !sol_save
+    set nostartofline
   endif
 endfunction " }}}1
 
