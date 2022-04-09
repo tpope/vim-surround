@@ -323,7 +323,7 @@ function! s:insert(...) " {{{1
   let cb_save = &clipboard
   set clipboard-=unnamed clipboard-=unnamedplus
   let reg_save = @@
-  call setreg('"',"\r",'v')
+  call setreg('"',"\032",'v')
   call s:wrapreg('"',char,"",linemode)
   " If line mode is used and the surrounding consists solely of a suffix,
   " remove the initial newline.  This fits a use case of mine but is a
@@ -354,7 +354,7 @@ function! s:insert(...) " {{{1
     call s:reindent()
   endif
   norm! `]
-  call search('\r','bW')
+  call search('\032','bW')
   let @@ = reg_save
   let &clipboard = cb_save
   return "\<Del>"
