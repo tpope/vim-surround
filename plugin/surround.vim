@@ -354,7 +354,7 @@ function! s:insert(...) " {{{1
     call s:reindent()
   endif
   norm! `]
-  call search('\032','bW')
+  call search("\032",'bW')
   let @@ = reg_save
   let &clipboard = cb_save
   return "\<Del>"
