@@ -45,12 +45,18 @@ Emphasize hello: `ysiw<em>`
 
     <em>Hello</em> world!
 
-Finally, let's try out visual mode. Press a capital V (for linewise
+Let's try out visual mode. Press a capital V (for linewise
 visual mode) followed by `S<p class="important">`.
 
     <p class="important">
       <em>Hello</em> world!
     </p>
+
+To change tag and keep attributes omit the last angle bracket `cst<q` 
+
+    <li class="important">
+      <em>Hello</em> world!
+    </li>
 
 This plugin is very powerful for HTML and XML editing, a niche which
 currently seems underfilled in Vim land.  (As opposed to HTML/XML
