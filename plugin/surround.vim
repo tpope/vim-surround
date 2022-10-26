@@ -35,6 +35,9 @@ endfunction
 
 function! s:inputreplacement()
   let c = s:getchar()
+  while c =~ '^\d\+$'
+    let c .= s:getchar()
+  endwhile
   if c == " "
     let c .= s:getchar()
   endif
@@ -139,6 +142,11 @@ function! s:wrap(string,char,type,removed,special)
   endif
   let pairs = "b()B{}r[]a<>"
   let extraspace = ""
+  let multi = 1
+  if newchar =~ '^\d\+'
+    let multi = matchstr(newchar, '^\d\+')
+    let newchar = substitute(newchar,'^\d\+','','')
+  endif
   if newchar =~ '^ '
     let newchar = strpart(newchar,1)
     let extraspace = ' '
@@ -275,6 +283,8 @@ function! s:wrap(string,char,type,removed,special)
       let keeper = strcharpart(keeper,0,strchars(keeper) - 1)
     endif
   endif
+  let before = repeat(before, multi)
+  let after = repeat(after, multi)
   if type ==# 'V'
     let before = initspaces.before
   endif
