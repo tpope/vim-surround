@@ -411,6 +411,16 @@ function! s:dosurround(...) " {{{1
       exe 'norm! l'
     endif
     exe 'norm! dt'.char
+  elseif char =~# '[fF]'
+    let [sfline,sfcol,mfline,mfcol,efline,efcol] = [0,0,0,0,0,0]
+    for i in range(scount) 
+      let [sfline,sfcol,mfline,mfcol,efline,efcol] = s:searchfuncpos()
+      call cursor(sfline, sfcol)
+    endfor
+    if sfline != 0
+      call cursor(mfline, mfcol)
+      norm! di(
+    endif
   else
     exe 'norm! d'.strcount.'i'.char
   endif
@@ -441,6 +451,9 @@ function! s:dosurround(...) " {{{1
   elseif char =~# '[[:punct:][:space:]]' && char !~# '[][(){}<>]'
     exe 'norm! F'.char
     exe 'norm! df'.char
+  elseif char =~# '[fF]'
+    call cursor(sfline, sfcol)
+    norm! df)
   else
     " One character backwards
     call search('\m.', 'bW')
@@ -451,7 +464,7 @@ function! s:dosurround(...) " {{{1
   let oldhead = strpart(oldline,0,strlen(oldline)-strlen(rem2))
   let oldtail = strpart(oldline,  strlen(oldline)-strlen(rem2))
   let regtype = getregtype('"')
-  if char =~# '[\[({<T]' || spc
+  if char =~# '[\[({<TF]' || spc
     let keeper = substitute(keeper,'^\s\+','','')
     let keeper = substitute(keeper,'\s\+$','','')
   endif
@@ -592,6 +605,48 @@ function! s:closematch(str) " {{{1
   else
     return ""
   endif
+endfunction " }}}1
+
+function! s:searchfuncpos() " {{{1
+  " Save cursor position and last visual mode
+  let ppos = getpos(".")
+  let svpos = getpos("'<")
+  let evpos = getpos("'>")
+  let pvmode = visualmode()
+
+  let [sfline,sfcol,mfline,mfcol,efline,efcol] = [0,0,0,0,0,0]
+  while 1
+    " Get surounding paren text object
+    norm! va(
+    let [ebuf,eline,ecol,eoff] = getpos(".")
+    let [sbuf,sline,scol,soff] = getpos("v")
+    execute "norm! \<esc>"
+
+    if eline == sline && ecol == scol
+      break
+    endif
+
+    call cursor(sline,scol,soff)
+    let [fline,fcol] = searchpos('\i\+\s*(','bnec')
+    if fline == sline && fcol == scol
+      let [sfline,sfcol] = searchpos('\i\+\s*(','bnc')
+      let [mfline,mfcol] = [sline,scol]
+      let [efline,efcol] = [eline,ecol]
+      break
+    elseif fline == 0 && fcol == 0
+      break
+    else
+      norm! h
+    endif
+  endwhile
+
+  " Reset cursor position and last visual mode
+  call setpos(".",ppos)
+  call setpos("'<",svpos)
+  call setpos("'>",evpos)
+  call visualmode(pvmode)
+
+  return [sfline,sfcol,mfline,mfcol,efline,efcol]
 endfunction " }}}1
 
 nnoremap <silent> <Plug>SurroundRepeat .

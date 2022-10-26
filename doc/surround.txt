@@ -115,6 +115,10 @@ slight shortcut for ysi (cswb == ysiwb, more or less).
 A p represents a |paragraph|.  This behaves similarly to w, W, and s above;
 however, newlines are sometimes added and/or removed.
 
+An f represents a function call.  A function call consists of an identifier
+followed by a parenthesized expression.  See |isident| for details on
+identifiers.
+
 REPLACEMENTS                                    *surround-replacements*
 
 A replacement argument is a single character, and is required by |cs|, |ys|,
@@ -147,6 +151,10 @@ function name inside the parentheses.
 
 If s is used, a leading but not trailing space is added.  This is useful for
 removing parentheses from a function call with csbs.
+
+If f is used, Vim prompts for a function name to insert.  If F is used, the
+expression is surrounded by additional whitespace.  If <C-F> is used, the
+function name will be place in the parenthesis, Lisp-style.
 
 CUSTOMIZING                                     *surround-customizing*
 
