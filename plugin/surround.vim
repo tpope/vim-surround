@@ -57,7 +57,7 @@ endfunction
 
 " }}}1
 
-" Wrapping functions {{{1
+" Wrapping/unwrapping functions {{{1
 
 function! s:extractbefore(str)
   if a:str =~ '\r'
@@ -73,6 +73,23 @@ function! s:extractafter(str)
   else
     return matchstr(a:str,'\n\zs.*')
   endif
+endfunction
+
+if exists('*trim')
+  function! s:trim(txt) abort
+    return trim(a:txt)
+  endfunction
+else
+  function! s:trim(txt) abort
+    return substitute(a:txt, '\%(^\s\+\|\s\+$\)', '', 'g')
+  endfunction
+endif
+
+function! s:customsurroundings(char, b, trim) abort
+  let all    = s:process(get(a:b ? b: : g:, 'surround_'.char2nr(a:char)))
+  let before = s:extractbefore(all)
+  let after  = s:extractafter(all)
+  return a:trim ? [s:trim(before), s:trim(after)] : [before, after]
 endfunction
 
 function! s:fixindent(str,spc)
@@ -148,13 +165,9 @@ function! s:wrap(string,char,type,removed,special)
     let before = ''
     let after  = ''
   elseif exists("b:surround_".char2nr(newchar))
-    let all    = s:process(b:surround_{char2nr(newchar)})
-    let before = s:extractbefore(all)
-    let after  =  s:extractafter(all)
+    let [before, after] = s:customsurroundings(newchar, 1, 0)
   elseif exists("g:surround_".char2nr(newchar))
-    let all    = s:process(g:surround_{char2nr(newchar)})
-    let before = s:extractbefore(all)
-    let after  =  s:extractafter(all)
+    let [before, after] = s:customsurroundings(newchar, 0, 0)
   elseif newchar ==# "p"
     let before = "\n"
     let after  = "\n\n"
@@ -306,6 +319,45 @@ function! s:wrapreg(reg,char,removed,special)
   let new = s:wrap(orig,a:char,type,a:removed,a:special)
   call setreg(a:reg,new,type)
 endfunction
+
+function! s:escape(str) abort
+  return escape(a:str, '!#$%&()*+,-./:;<=>?@[\]^{|}~')
+endfunction
+
+function! s:deletecustom(char, b, count) abort
+  let [before, after] = s:customsurroundings(a:char, a:b, 1)
+  let [before_pat, after_pat] = ['\v\C'.s:escape(before), '\v\C'.s:escape(after)]
+  " searchpair()'s 'c' flag matches both start and end.
+  " Append '\zs' to the closer pattern so that it doesn't match the closer on the cursor.
+  let found = searchpair(before_pat, '', after_pat.'\zs', 'bcW')
+  if found <= 0
+    return ['','']
+  endif
+  " Handle count/nesting only for asymmetric surroundings
+  if before !=# after
+    for _ in range(a:count - 1)
+      let found = searchpair(before_pat, '', after_pat, 'bW')
+      if found <= 0
+        return ['','']
+      endif
+    endfor
+  endif
+  norm! v
+  if before ==# after
+    call search(before_pat, 'ceW')
+    let found = search(after_pat, 'eW')
+  else
+    let found = searchpair(before_pat, '', after_pat, 'W')
+    call search(after_pat, 'ceW')
+  endif
+  if found <= 0
+    exe "norm! \<Esc>"
+    return ['','']
+  endif
+  norm! d
+  return [before, after]
+endfunction
+
 " }}}1
 
 function! s:insert(...) " {{{1
@@ -380,11 +432,12 @@ function! s:dosurround(...) " {{{1
     let char = strpart(char,1)
     let spc = 1
   endif
-  if char == 'a'
-    let char = '>'
-  endif
-  if char == 'r'
-    let char = ']'
+  if !exists("b:surround_".char2nr(char)) && !exists("g:surround_".char2nr(char))
+    if char == 'a'
+      let char = '>'
+    elseif char == 'r'
+      let char = ']'
+    endif
   endif
   let newchar = ""
   if a:0 > 1
@@ -405,6 +458,10 @@ function! s:dosurround(...) " {{{1
   let strcount = (scount == 1 ? "" : scount)
   if char == '/'
     exe 'norm! '.strcount.'[/d'.strcount.']/'
+  elseif exists("b:surround_".char2nr(char))
+    let [before, after] = s:deletecustom(char, 1, scount)
+  elseif exists("g:surround_".char2nr(char))
+    let [before, after] = s:deletecustom(char, 0, scount)
   elseif char =~# '[[:punct:][:space:]]' && char !~# '[][(){}<>"''`]'
     exe 'norm! T'.char
     if getline('.')[col('.')-1] == char
@@ -426,7 +483,10 @@ function! s:dosurround(...) " {{{1
   endif
   let oldline = getline('.')
   let oldlnum = line('.')
-  if char ==# "p"
+  if exists("b:surround_".char2nr(char)) || exists("g:surround_".char2nr(char))
+    call setreg('"', before.after, "c")
+    let keeper = substitute(substitute(keeper,'\v\C^'.s:escape(before).'\s=','',''), '\v\C\s='.s:escape(after).'$', '','')
+  elseif char ==# "p"
     call setreg('"','','V')
   elseif char ==# "s" || char ==# "w" || char ==# "W"
     " Do nothing
