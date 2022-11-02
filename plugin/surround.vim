@@ -224,8 +224,15 @@ function! s:wrap(string,char,type,removed,special)
     let fnc = input('function: ')
     if fnc != ""
       let s:input = fnc."\<CR>"
-      let before = substitute(fnc,'($','','').'('
-      let after  = ')'
+      let lastchar = strpart(fnc,strlen(fnc)-1,1)
+      let lastidx = stridx(pairs,lastchar)
+      if lastidx >= 0 && lastidx % 3 == 1
+        let before = fnc
+        let after = strpart(pairs,lastidx+1,1)
+      else
+        let before = fnc.'('
+        let after  = ')'
+      endif
       if newchar ==# 'F'
         let before .= ' '
         let after = ' ' . after
