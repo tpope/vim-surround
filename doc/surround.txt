@@ -129,6 +129,12 @@ b, B, r, and a are aliases for ), }, ], and >.  To fulfill the common need for
 code blocks in C-style languages, <C-}> (which is really <C-]>) adds braces on
 lines separate from the content.
 
+If a number is used, the remaining replacement argument is multiplied by that
+count.
+
+  Old text                  Command           New text ~
+  hello                     ysW2*             **hello**
+
 If t or < is used, Vim prompts for an HTML/XML tag to insert.  You may specify
 attributes here and they will be stripped from the closing tag. If replacing a
 tag, its attributes are kept in the new tag. End your input with > to discard

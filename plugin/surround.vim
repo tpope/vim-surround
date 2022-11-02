@@ -35,7 +35,7 @@ endfunction
 
 function! s:inputreplacement()
   let c = s:getchar()
-  if c == " "
+  if c =~ "[ 0-9]"
     let c .= s:getchar()
   endif
   if c =~ "\<Esc>" || c =~ "\<C-C>"
@@ -139,6 +139,11 @@ function! s:wrap(string,char,type,removed,special)
   endif
   let pairs = "b()B{}r[]a<>"
   let extraspace = ""
+  let scount = 1
+  if newchar =~ '^[0-9]'
+    let scount = strpart(newchar,0,1)
+    let newchar = strpart(newchar,1)
+  endif
   if newchar =~ '^ '
     let newchar = strpart(newchar,1)
     let extraspace = ' '
@@ -251,6 +256,8 @@ function! s:wrap(string,char,type,removed,special)
     let before = ''
     let after  = ''
   endif
+  let before = repeat(before, scount)
+  let after = repeat(after, scount)
   let after  = substitute(after ,'\n','\n'.initspaces,'g')
   if type ==# 'V' || (a:special && type ==# "v")
     let before = substitute(before,' \+$','','')
