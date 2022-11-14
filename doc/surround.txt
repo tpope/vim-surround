@@ -61,7 +61,7 @@ As a special case, *yss* operates on the current line, ignoring leading
 whitespace.
 
   Old text                  Command     New text ~
-      Hello w*orld!         yssB            {Hello world!}
+  Hello w*orld!             yssB        {Hello world!}
 
 There is also *yS* and *ySS* which indent the surrounded text and place it
 on a line of its own.
@@ -95,8 +95,17 @@ possible targets are based closely on the |text-objects| provided by Vim.
 All targets are currently just one character.
 
 Eight punctuation marks, (, ), {, }, [, ], <, and >, represent themselves
-and their counterparts.  If the opening mark is used, contained whitespace is
-also trimmed.  The targets b, B, r, and a are aliases for ), }, ], and > 
+and their counterparts. If the opening mark is used, whitespace is inserted 
+around the target.
+
+  Old text                  Command     New text ~
+  *"$#" -ne 3               ysf3        [ "$#" -ne 3 ]
+  *[ "$#" -ne 3 ]           ys%]        [[ "$#" -ne 3 ]]
+  $total*+=1                yst1SPCSPC  $total += 1
+  $*total += 1              ysf1(       $( total += 1 )
+  $*( total += 1 )          ys%)        $(( total += 1 ))
+
+The targets b, B, r, and a are aliases for ), }, ], and > 
 (the first two mirror Vim; the second two are completely arbitrary and
 subject to change).
 
