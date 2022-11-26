@@ -413,6 +413,11 @@ function! s:dosurround(...) " {{{1
     exe 'norm! dt'.char
   else
     exe 'norm! d'.strcount.'i'.char
+    " Note_issue215:
+    " at this point for [](){}<>, we usually expect cursor to be on the right
+    " brace. However that won't be the case if the right brace had a newline
+    " before it and the left brace had text afterward with no newline -- in
+    " that case, the cursor will be on the left brace. See issue 215.
   endif
   let keeper = getreg('"')
   let okeeper = keeper " for reindent below
@@ -442,8 +447,22 @@ function! s:dosurround(...) " {{{1
     exe 'norm! F'.char
     exe 'norm! df'.char
   else
-    " One character backwards
-    call search('\m.', 'bW')
+    " One character backwards, except if the cursor is now on the left brace.
+    " see Note_issue215.
+    let move_left = 1
+    let lefts  = '[({<'
+    let rights = '])}>'
+    let left_i = match(lefts, char)
+    let right_i = match(rights, char)
+    if left_i != -1 || right_i != -1
+      let left = right_i != -1 ? lefts[right_i] : char
+      if getline('.')[col('.') - 1] == left
+        let move_left = 0
+      endif
+    endif
+    if move_left
+      call search('\m.', 'bW')
+    endif
     exe "norm! da".char
   endif
   let removed = getreg('"')
