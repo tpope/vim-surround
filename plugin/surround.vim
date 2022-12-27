@@ -412,7 +412,7 @@ function! s:dosurround(...) " {{{1
     endif
     exe 'norm! dt'.char
   else
-    exe 'norm! d'.strcount.'i'.char
+    exe 'norm d'.strcount.'i'.char
   endif
   let keeper = getreg('"')
   let okeeper = keeper " for reindent below
@@ -444,7 +444,7 @@ function! s:dosurround(...) " {{{1
   else
     " One character backwards
     call search('\m.', 'bW')
-    exe "norm! da".char
+    exe "norm da".char
   endif
   let removed = getreg('"')
   let rem2 = substitute(removed,'\n.*','','')
@@ -521,7 +521,7 @@ function! s:opfunc(type, ...) abort " {{{1
   let reg_type = getregtype(reg)
   let type = a:type
   if a:type == "char"
-    silent exe 'norm! v`[o`]"'.reg.'y'
+    silent exe 'norm v`[o`]"'.reg.'y'
     let type = 'v'
   elseif a:type == "line"
     silent exe 'norm! `[V`]"'.reg.'y'
