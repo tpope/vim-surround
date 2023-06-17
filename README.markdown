@@ -77,6 +77,9 @@ support:
 Only the opening brackets—`[`, `{`, and `(`—add a space.  Use a closing
 bracket, or the `b` (`(`) and `B` (`{`) aliases.
 
+Alternatively, to _completely disable_ adding of spaces (even with opening
+brackets) - then one may set `let g:surround_insert_space = 0`.
+
 ## Contributing
 
 See the contribution guidelines for
